@@ -17,19 +17,19 @@ class AuthController extends GetxController {
 
   var userProfile = {}.obs;
 
-  Future<void> register(String name, String email,String phone, String password, String gender) async {
+  Future<void> register(String name, String email, String phone,
+      String password, String gender) async {
     var message = '';
 
     try {
       isLoading.value = true;
 
       http.Response response = await _authService.registerUser(
-        name: name,
-        email: email,
-        password: password,
-        phone: phone,
-        gender: gender
-      );
+          name: name,
+          email: email,
+          password: password,
+          phone: phone,
+          gender: gender);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         message = 'Success: ${response.body}';
@@ -97,7 +97,7 @@ class AuthController extends GetxController {
 
         message = 'Success: ${response.body}';
 
-        Get.offAll(() => PetShopApp());
+        Get.offAll(() => const PetShopApp());
       } else {
         Get.snackbar('Failed', 'Invalid / Expired OTP');
         message = 'Invalid OTP: ${response.body}';
@@ -140,7 +140,7 @@ class AuthController extends GetxController {
       if (response != null && response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        userProfile.value = {'user':data['user']};
+        userProfile.value = {'user': data['user']};
 
         Get.snackbar('Success', 'Profile updated successfully');
         message = 'Profile updated: ${response.body}';
@@ -156,4 +156,29 @@ class AuthController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  Future<void> logout() async {
+    try {
+      isLoading.value = true;
+
+      // Clear SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      // Reset user profile
+      userProfile.value = {};
+
+      // Navigate to login screen
+      Get.offAll(() => const LoginScreen());
+
+      Get.snackbar('Success', 'Logged out successfully');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to logout: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+
+  
 }

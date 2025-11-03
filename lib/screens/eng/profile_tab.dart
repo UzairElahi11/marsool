@@ -9,13 +9,15 @@ import 'package:petshow/widgets/space_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileTab extends StatefulWidget {
-  ProfileTab({super.key});
+  const ProfileTab({super.key});
 
   @override
   State<ProfileTab> createState() => _ProfileTabState();
 }
 
 class _ProfileTabState extends State<ProfileTab> {
+  final AuthController authController = Get.put(AuthController());
+
   @override
   void initState() {
     super.initState();
@@ -41,16 +43,18 @@ class _ProfileTabState extends State<ProfileTab> {
                       .copyWith(fontSize: 20, fontWeight: FontWeight.bold))),
           const Spacebar('h', space: 3.5),
           profileOption(Icons.person, "My Profile", () {
-            Get.to(()=>ProfileScreen());
+            Get.to(() => const ProfileScreen());
           }),
           profileOption(Icons.maps_home_work_outlined, "Address", () {
-            Get.to(()=>AddressListScreen());
+            Get.to(() => const AddressListScreen());
           }),
           profileOption(Icons.account_balance_wallet, "Wallet", () {}),
           profileOption(Icons.history, "Order History", () {}),
           profileOption(Icons.payment, "Payment Methods", () {}),
           profileOption(Icons.help_outline, "Help & Support", () {}),
-          profileOption(Icons.logout, "Logout", () {}),
+          profileOption(Icons.logout, "Logout", () {
+            _showLogoutDialog();
+          }),
         ],
       ),
     );
@@ -64,6 +68,43 @@ class _ProfileTabState extends State<ProfileTab> {
       trailing: Icon(Icons.arrow_forward_ios_rounded,
           size: SizeConfig.blockSizeHorizontal! * 3.5),
       onTap: ontap,
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Logout Confirmation',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            'Are you sure you want to logout? This will clear all your data and you will need to login again.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                authController.logout();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

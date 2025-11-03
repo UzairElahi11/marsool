@@ -130,6 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 15),
               ],
             ),
           ),
@@ -168,7 +169,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: ConstantManager.primaryColor, width: 2),
+          borderSide:
+              const BorderSide(color: ConstantManager.primaryColor, width: 2),
         ),
       ),
     );
