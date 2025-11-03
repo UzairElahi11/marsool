@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -35,6 +36,9 @@ class _StorePageState extends State<StorePage> {
         Uri.parse('http://hcodecraft.com/felwa/api/categories-with-stores'),
         headers: {'Authorization': 'Bearer $token'},
       );
+      log("RESPONSE CATEGORIES::: ${response.body}");
+
+
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
