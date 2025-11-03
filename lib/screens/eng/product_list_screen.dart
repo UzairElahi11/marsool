@@ -244,6 +244,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
               height: 120,
               width: double.infinity,
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                height: 120,
+                width: double.infinity,
+                color: Colors.grey.shade300,
+                alignment: Alignment.center,
+                child: Icon(Icons.storefront, color: Colors.grey.shade700),
+              ),
             ),
           ),
           // Product name

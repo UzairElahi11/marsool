@@ -46,7 +46,7 @@ class _StoreListScreenState extends State<StoreListScreen> {
         final jsonResponse = json.decode(response.body);
         final data = jsonResponse['data'] as List;
         final selectedCategory = data.firstWhere(
-              (c) => c['id'] == widget.categoryId,
+          (c) => c['id'] == widget.categoryId,
           orElse: () => null,
         );
 
@@ -72,79 +72,90 @@ class _StoreListScreenState extends State<StoreListScreen> {
         backgroundColor: primaryColor,
         title: Text(
           widget.categoryTitle,
-          style: GoogleFonts.ubuntu(color: Colors.white, fontWeight: FontWeight.w600),
+          style: GoogleFonts.ubuntu(
+              color: Colors.white, fontWeight: FontWeight.w600),
         ),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : stores.isEmpty
-          ? Center(
-        child: Text(
-          'No stores found for this category.',
-          style: GoogleFonts.ubuntu(color: Colors.grey, fontSize: 16),
-        ),
-      )
-          : ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: stores.length,
-        itemBuilder: (context, index) {
-          final store = stores[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProductListScreen(
-                    storeId: store['id'],
-                    storeName: store['name'],
+              ? Center(
+                  child: Text(
+                    'No stores found for this category.',
+                    style: GoogleFonts.ubuntu(color: Colors.grey, fontSize: 16),
                   ),
-                ),
-              );
-            },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.shade300,
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-                    child: Image.network(
-                      store['logo_url'] ?? 'https://via.placeholder.com/100',
-                      height: 90,
-                      width: 90,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      store['name'] ?? '',
-                      style: GoogleFonts.ubuntu(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: secondaryColor,
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: stores.length,
+                  itemBuilder: (context, index) {
+                    final store = stores[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProductListScreen(
+                              storeId: store['id'],
+                              storeName: store['name'],
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.shade300,
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.horizontal(
+                                  left: Radius.circular(16)),
+                              child: Image.network(
+                                store['logo_url'] ??
+                                    'https://via.placeholder.com/100',
+                                height: 90,
+                                width: 90,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                  height: 120,
+                                  width: double.infinity,
+                                  color: Colors.grey.shade300,
+                                  alignment: Alignment.center,
+                                  child: Icon(Icons.storefront,
+                                      color: Colors.grey.shade700),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                store['name'] ?? '',
+                                style: GoogleFonts.ubuntu(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: secondaryColor,
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right, color: Colors.grey),
+                            const SizedBox(width: 8),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right, color: Colors.grey),
-                  const SizedBox(width: 8),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+                    );
+                  },
+                ),
     );
   }
 }
-
