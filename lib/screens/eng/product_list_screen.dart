@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -8,7 +9,8 @@ class ProductListScreen extends StatefulWidget {
   final int storeId;
   final String storeName;
 
-  const ProductListScreen({super.key, required this.storeId, required this.storeName});
+  const ProductListScreen(
+      {super.key, required this.storeId, required this.storeName});
 
   @override
   State<ProductListScreen> createState() => _ProductListScreenState();
@@ -33,9 +35,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
       final token = prefs.getString('token') ?? '';
 
       final response = await http.get(
-        Uri.parse('http://hcodecraft.com/felwa/api/stores/${widget.storeId}/products'),
+        Uri.parse(
+            'http://hcodecraft.com/felwa/api/stores/${widget.storeId}/products'),
         headers: {'Authorization': 'Bearer $token'},
       );
+
+      log("RESPONSE STORE PRODUCTS::: ${response.body}");
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
@@ -69,6 +74,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
           'quantity': quantity.toString(),
         },
       );
+
+      log("RESPONSE ADD TO CART::: ${response.body}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonResponse = json.decode(response.body);
@@ -123,7 +130,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ),
               Text(
                 quantity.toString(),
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               IconButton(
                 icon: const Icon(Icons.add_circle, color: Colors.green),
@@ -166,42 +174,43 @@ class _ProductListScreenState extends State<ProductListScreen> {
         backgroundColor: primaryColor,
         title: Text(
           widget.storeName,
-          style: GoogleFonts.ubuntu(color: Colors.white, fontWeight: FontWeight.w600),
+          style: GoogleFonts.ubuntu(
+              color: Colors.white, fontWeight: FontWeight.w600),
         ),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : products.isEmpty
-          ? Center(
-        child: Text(
-          'No products found.',
-          style: GoogleFonts.ubuntu(fontSize: 16, color: Colors.grey),
-        ),
-      )
-          : GridView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: products.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.75,
-        ),
-        itemBuilder: (context, index) {
-          final product = products[index];
-          final imageUrl = product['images'] != null &&
-              (product['images'] as List).isNotEmpty
-              ? 'https://hcodecraft.com/felwa/storage/${product['images'][0]['path']}'
-              : 'https://via.placeholder.com/150';
-          return productCard(
-            id: product['id'],
-            name: product['title'],
-            price: product['price'],
-            currency: product['currency'] ?? 'PKR',
-            imgUrl: imageUrl,
-          );
-        },
-      ),
+              ? Center(
+                  child: Text(
+                    'No products found.',
+                    style: GoogleFonts.ubuntu(fontSize: 16, color: Colors.grey),
+                  ),
+                )
+              : GridView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: products.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.75,
+                  ),
+                  itemBuilder: (context, index) {
+                    final product = products[index];
+                    final imageUrl = product['images'] != null &&
+                            (product['images'] as List).isNotEmpty
+                        ? 'https://hcodecraft.com/felwa/storage/${product['images'][0]['path']}'
+                        : 'https://via.placeholder.com/150';
+                    return productCard(
+                      id: product['id'],
+                      name: product['title'],
+                      price: product['price'],
+                      currency: product['currency'] ?? 'PKR',
+                      imgUrl: imageUrl,
+                    );
+                  },
+                ),
     );
   }
 
@@ -276,7 +285,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              icon: const Icon(Icons.shopping_cart, size: 16, color: Colors.white),
+              icon: const Icon(Icons.shopping_cart,
+                  size: 16, color: Colors.white),
               label: const Text(
                 'Add to Cart',
                 style: TextStyle(color: Colors.white, fontSize: 13),

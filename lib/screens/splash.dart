@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:petshow/screens/language_selection.dart';
 import 'package:petshow/utils/size_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../widgets/app_logo.dart';
-import 'main_screen.dart'; // import your main app file
+import 'main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -25,14 +26,14 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-    print(token);
+    debugPrint(token.toString());
 
     if (token != null && token.isNotEmpty) {
       // Token exists → go to main app
-      Get.offAll(() => PetShopApp());
+      Get.offAll(() => const PetShopApp());
     } else {
       // No token → go to language selection
-      Get.offAll(() => LanguageSelectionScreen());
+      Get.offAll(() => const LanguageSelectionScreen());
     }
   }
 
