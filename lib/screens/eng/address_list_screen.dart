@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -39,6 +40,8 @@ class _AddressListScreenState extends State<AddressListScreen> {
           "Accept": "application/json",
         },
       );
+      log("URL::: ${response.request?.url}");
+      log("RESPONSE ADDRESS::: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

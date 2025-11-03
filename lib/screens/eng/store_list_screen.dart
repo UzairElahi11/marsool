@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -41,6 +42,8 @@ class _StoreListScreenState extends State<StoreListScreen> {
         Uri.parse('http://hcodecraft.com/felwa/api/categories-with-stores'),
         headers: {'Authorization': 'Bearer $token'},
       );
+      log("URL::: ${response.request?.url}");
+      log("RESPONSE STORES::: ${response.body}");
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);

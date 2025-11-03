@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -25,7 +26,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     setState(() => isLoading = true);
     try {
       final response = await http.get(Uri.parse(apiUrl));
-
+      log("URL::: ${response.request?.url}");
+      log("RESPONSE CATEGORIES::: ${response.body}");
+      
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {

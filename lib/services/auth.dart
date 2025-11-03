@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,10 +25,14 @@ class AuthService {
         'password': password,
         'password_confirmation': password,
         'role': 'customer',
-        'phone':phone,
-        'gender':gender,
+        'phone': phone,
+        'gender': gender,
       }),
     );
+    //Print URL
+    log("URL::: ${response.request?.url}");
+    //Print Response
+    log("RESPONSE REGISTER::: ${response.body}");
 
     return response;
   }
@@ -46,6 +51,10 @@ class AuthService {
         'password': password,
       }),
     );
+    //Print URL
+    log("URL::: ${response.request?.url}");
+    //Print Response
+    log("RESPONSE LOGIN::: ${response.body}");
 
     return response;
   }
@@ -62,6 +71,11 @@ class AuthService {
       body: jsonEncode({'email': email, 'otp': otp}),
     );
 
+    //Print URL
+    log("URL::: ${response.request?.url}");
+    //Print Response
+    log("RESPONSE VERIFY OTP::: ${response.body}");
+
     return response;
   }
 
@@ -77,6 +91,10 @@ class AuthService {
           "Authorization": "Bearer $token",
         },
       );
+      //Print URL
+      log("URL::: ${response.request?.url}");
+      //Print Response
+      log("RESPONSE PROFILE::: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

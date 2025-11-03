@@ -74,6 +74,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
           'quantity': quantity.toString(),
         },
       );
+      //Print URL
+      log("URL::: ${response.request?.url}");
 
       log("RESPONSE ADD TO CART::: ${response.body}");
 

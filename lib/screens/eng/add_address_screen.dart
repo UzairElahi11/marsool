@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -66,6 +67,10 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
           "lng": "71.5249",
         }),
       );
+      //Print URL
+      log("URL::: ${response.request?.url}");
+      //Print Response
+      log("RESPONSE ADDRESS::: ${response.body}");
 
       setState(() => isLoading = false);
 
