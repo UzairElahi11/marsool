@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:petshow/screens/eng/product_detail_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProductListScreen extends StatefulWidget {
@@ -223,7 +225,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
     required String currency,
     required String imgUrl,
   }) {
-    return Container(
+    return GestureDetector(
+      onTap: () => Get.to(() => ProductDetailsScreen(
+            productId: id,
+            storeName: widget.storeName,
+          )),
+      child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -304,6 +311,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ),
         ],
       ),
+      )
     );
   }
 }
