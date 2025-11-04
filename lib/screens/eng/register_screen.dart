@@ -59,157 +59,116 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    SizeConfig().init(context);
-
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Obx(
-            () => LoadingOverlay(
-          progressIndicator: OverlayLoader(),
-          isLoading: _authController.isLoading.value,
-          child: Stack(
+      body: Obx(() => LoadingOverlay(
+        progressIndicator: OverlayLoader(),
+        isLoading: _authController.isLoading.value,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 75,
-                child: AppLogo(
-                  h: SizeConfig.blockSizeVertical! * 13.0,
-                  w: SizeConfig.blockSizeVertical! * 13.0,
+              EnglishTitle('register.title'.tr),
+              const Spacebar('h', space: 2.25),
+              EnglishIconTextField(
+                controller: nameController,
+                hint: 'register.fullName'.tr,
+                icon: Icons.person_outline,
+                keyboardType: TextInputType.name,
+              ),
+              const Spacebar('h', space: 2),
+              EnglishIconTextField(
+                controller: emailController,
+                hint: 'register.email'.tr,
+                icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const Spacebar('h', space: 2),
+              EnglishIconTextField(
+                controller: phoneController,
+                hint: 'register.phone'.tr,
+                icon: Icons.phone_outlined,
+                keyboardType: TextInputType.phone,
+              ),
+              const Spacebar('h', space: 2),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade700),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.person_outline, color: Colors.black),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedGender,
+                          hint: Text('register.gender'.tr),
+                          isExpanded: true,
+                          items: genders.map((String gender) {
+                            return DropdownMenuItem<String>(
+                              value: gender,
+                              child: Text(gender),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedGender = newValue;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(24)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 10,
-                        offset: Offset(0, -2),
+              const Spacebar('h', space: 2),
+              EnglishIconTextField(
+                controller: passwordController,
+                obscureText: true,
+                hint: 'register.password'.tr,
+                icon: Icons.lock_outline,
+              ),
+              const Spacebar('h', space: 2),
+              EnglishIconTextField(
+                controller: confirmPasswordController,
+                obscureText: true,
+                hint: 'register.confirmPassword'.tr,
+                icon: Icons.lock_outline,
+              ),
+              const Spacebar('h', space: 2.5),
+              EnglishButton('register.register'.tr, ConstantManager.primaryColor, _register),
+              const Spacebar('h', space: 2.5),
+              GestureDetector(
+                onTap: () {
+                  Get.back();
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'register.already'.tr,
+                      style: ConstantManager.kfont.copyWith(
+                        color: Colors.black,
+                        fontSize: SizeConfig.blockSizeHorizontal! * 3.5,
                       ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const EnglishTitle('Create New Account'),
-                        const Spacebar('h', space: 2.25),
-                        EnglishIconTextField(
-                          controller: nameController,
-                          hint: 'Full Name',
-                          icon: Icons.person_outline,
-                          keyboardType: TextInputType.name,
-                        ),
-                        const Spacebar('h', space: 2),
-                        EnglishIconTextField(
-                          controller: emailController,
-                          hint: 'Email',
-                          icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        const Spacebar('h', space: 2),
-                        EnglishIconTextField(
-                          controller: phoneController,
-                          hint: 'Phone Number',
-                          icon: Icons.phone_outlined,
-                          keyboardType: TextInputType.phone,
-                        ),
-                        const Spacebar('h', space: 2),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade700),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.person_outline, color: Colors.black),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: selectedGender,
-                                    hint: const Text('Select Gender'),
-                                    isExpanded: true,
-                                    items: genders.map((String gender) {
-                                      return DropdownMenuItem<String>(
-                                        value: gender,
-                                        child: Text(gender),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        selectedGender = newValue;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const Spacebar('h', space: 2),
-                        EnglishIconTextField(
-                          controller: passwordController,
-                          obscureText: true,
-                          hint: 'Password',
-                          icon: Icons.lock_outline,
-                        ),
-                        const Spacebar('h', space: 2),
-                        EnglishIconTextField(
-                          controller: confirmPasswordController,
-                          obscureText: true,
-                          hint: 'Confirm Password',
-                          icon: Icons.lock_outline,
-                        ),
-                        const Spacebar('h', space: 2.5),
-                        EnglishButton('Register', ConstantManager.primaryColor,
-                            _register),
-                        const Spacebar('h', space: 2.5),
-                        GestureDetector(
-                          onTap: () {
-                            Get.back();
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Already have an account? ",
-                                style: ConstantManager.kfont.copyWith(
-                                  color: Colors.black,
-                                  fontSize:
-                                  SizeConfig.blockSizeHorizontal! * 3.5,
-                                ),
-                              ),
-                              Text(
-                                "Login",
-                                style: TextStyle(
-                                  color: ConstantManager.primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize:
-                                  SizeConfig.blockSizeHorizontal! * 3.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
                     ),
-                  ),
+                    Text(
+                      'register.login'.tr,
+                      style: TextStyle(
+                        color: ConstantManager.primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 }

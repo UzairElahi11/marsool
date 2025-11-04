@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:petshow/screens/eng/cart_screen.dart';
 import 'package:petshow/screens/eng/profile_tab.dart';
 
 import 'eng/store_tab.dart';
-
 
 class PetShopApp extends StatelessWidget {
   const PetShopApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MainPage();
+    return const MainPage();
   }
 }
 
@@ -28,25 +28,36 @@ class _MainPageState extends State<MainPage> {
     const StorePage(),
     const OrdersPage(),
     const CartScreen(),
-     ProfileTab(),
+    const ProfileTab(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final isRTL = (Get.locale?.languageCode == 'ar');
+
     return Scaffold(
       body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        selectedItemColor: Colors.orange,
-        unselectedItemColor: Colors.grey,
-        onTap: (index) => setState(() => _currentIndex = index),
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.storefront), label: 'Store'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: 'Orders'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Cart'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-        ],
+      bottomNavigationBar: Directionality(
+        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          selectedItemColor: Colors.orange,
+          unselectedItemColor: Colors.grey,
+          onTap: (index) => setState(() => _currentIndex = index),
+          type: BottomNavigationBarType.fixed,
+          items: [
+            BottomNavigationBarItem(
+                icon: const Icon(Icons.storefront), label: 'bottom.store'.tr),
+            BottomNavigationBarItem(
+                icon: const Icon(Icons.shopping_bag_outlined),
+                label: 'bottom.orders'.tr),
+            BottomNavigationBarItem(
+                icon: const Icon(Icons.shopping_cart), label: 'bottom.cart'.tr),
+            BottomNavigationBarItem(
+                icon: const Icon(Icons.person_outline),
+                label: 'bottom.profile'.tr),
+          ],
+        ),
       ),
     );
   }
@@ -65,9 +76,24 @@ class OrdersPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final orders = [
-      {'title': 'Dog Food', 'date': 'Oct 12, 2025', 'status': 'Delivered', 'price': '\$20'},
-      {'title': 'Cat Toy', 'date': 'Oct 10, 2025', 'status': 'Shipped', 'price': '\$10'},
-      {'title': 'Bird Cage', 'date': 'Oct 8, 2025', 'status': 'Processing', 'price': '\$30'},
+      {
+        'title': 'Dog Food',
+        'date': 'Oct 12, 2025',
+        'status': 'Delivered',
+        'price': '\$20'
+      },
+      {
+        'title': 'Cat Toy',
+        'date': 'Oct 10, 2025',
+        'status': 'Shipped',
+        'price': '\$10'
+      },
+      {
+        'title': 'Bird Cage',
+        'date': 'Oct 8, 2025',
+        'status': 'Processing',
+        'price': '\$30'
+      },
     ];
 
     return SafeArea(
@@ -78,7 +104,10 @@ class OrdersPage extends StatelessWidget {
           children: [
             const Text(
               'My Orders',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.orange),
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange),
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -90,11 +119,14 @@ class OrdersPage extends StatelessWidget {
                   return ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.yellow.shade100,
-                      child: const Icon(Icons.shopping_bag_outlined, color: Colors.orange),
+                      child: const Icon(Icons.shopping_bag_outlined,
+                          color: Colors.orange),
                     ),
                     title: Text(order['title']!),
-                    subtitle: Text('Date: ${order['date']}\nStatus: ${order['status']}'),
-                    trailing: Text(order['price']!, style: const TextStyle(color: Colors.orange)),
+                    subtitle: Text(
+                        'Date: ${order['date']}\nStatus: ${order['status']}'),
+                    trailing: Text(order['price']!,
+                        style: const TextStyle(color: Colors.orange)),
                     isThreeLine: true,
                   );
                 },

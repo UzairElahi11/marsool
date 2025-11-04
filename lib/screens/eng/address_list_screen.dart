@@ -77,7 +77,7 @@ class _AddressListScreenState extends State<AddressListScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             onPressed: () => Navigator.pop(context, true),
             child:
-            Text("Delete", style: GoogleFonts.ubuntu(color: Colors.white)),
+                Text("Delete", style: GoogleFonts.ubuntu(color: Colors.white)),
           ),
         ],
       ),
@@ -126,10 +126,13 @@ class _AddressListScreenState extends State<AddressListScreen> {
         backgroundColor: primaryColor,
         centerTitle: true,
         title: Text(
-          "My Address",
+          'address.title'.tr,
           style: GoogleFonts.ubuntu(
-              fontWeight: FontWeight.w600, letterSpacing: 0.3, fontSize: 20,
-          color: Colors.white),
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+            fontSize: 20,
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -142,153 +145,143 @@ class _AddressListScreenState extends State<AddressListScreen> {
             if (value == true) fetchAddresses();
           });
         },
-        label: Text("Add Address",
-            style: GoogleFonts.ubuntu(
-                fontWeight: FontWeight.w500, color: Colors.white)),
+        label: Text(
+          'address.addAddress'.tr,
+          style: GoogleFonts.ubuntu(
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+          ),
+        ),
         icon: const Icon(Icons.add_location_alt_rounded, color: Colors.white),
       ),
       body: isLoading
-          ? Center(
-        child: CircularProgressIndicator(color: primaryColor),
-      )
+          ? Center(child: CircularProgressIndicator(color: primaryColor))
           : addresses.isEmpty
-          ? Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.map_outlined,
-              color: primaryColor.withOpacity(0.3), size: 80),
-          const SizedBox(height: 16),
-          Text("No addresses added yet",
-              style: GoogleFonts.ubuntu(
-                  fontSize: 16,
-                  color: Colors.grey.shade700,
-                  fontWeight: FontWeight.w500)),
-          const SizedBox(height: 8),
-          Text(
-            "Tap the + button to add your first address.",
-            style: GoogleFonts.ubuntu(color: Colors.grey.shade500),
-          ),
-        ],
-      )
-          : RefreshIndicator(
-        color: primaryColor,
-        onRefresh: fetchAddresses,
-        child: ListView.builder(
-          padding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          itemCount: addresses.length,
-          itemBuilder: (context, index) {
-            final address = addresses[index];
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12.withOpacity(0.06),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-                border: Border.all(
-                    color: primaryColor.withOpacity(0.15), width: 1),
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(16),
-                leading: CircleAvatar(
-                  backgroundColor: primaryColor.withOpacity(0.15),
-                  radius: 26,
-                  child: Icon(
-                    _getAddressIcon(address['label']),
-                    color: primaryColor,
-                    size: 26,
-                  ),
-                ),
-                title: Text(
-                  address['label'] ?? 'No Label',
-                  style: GoogleFonts.ubuntu(
-                      fontSize: 17, fontWeight: FontWeight.w600),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 4),
-                    Text(address['line1'] ?? '',
-                        style: GoogleFonts.ubuntu(
-                            color: Colors.grey.shade800,
-                            fontSize: 14)),
-                    const SizedBox(height: 2),
+                    Icon(Icons.map_outlined,
+                        color: primaryColor.withOpacity(0.3), size: 80),
+                    const SizedBox(height: 16),
                     Text(
-                        "${address['city'] ?? ''}, ${address['state'] ?? ''}, ${address['country'] ?? ''}",
-                        style: GoogleFonts.ubuntu(
-                            color: Colors.grey.shade600,
-                            fontSize: 13)),
-                    if (address['postcode'] != null)
-                      Text("Postcode: ${address['postcode']}",
-                          style: GoogleFonts.ubuntu(
-                              color: Colors.grey.shade500,
-                              fontSize: 12)),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                            primaryColor.withOpacity(0.1),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                                borderRadius:
-                                BorderRadius.circular(12)),
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    EditAddressScreen(address: address),
-                              ),
-                            ).then((value) {
-                              if (value == true) fetchAddresses();
-                            });
-                          },
-                          icon: Icon(Icons.edit,
-                              color: primaryColor, size: 18),
-                          label: Text("Edit",
-                              style: GoogleFonts.ubuntu(
-                                  color: primaryColor,
-                                  fontWeight: FontWeight.w500)),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                            Colors.redAccent.withOpacity(0.1),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                                borderRadius:
-                                BorderRadius.circular(12)),
-                          ),
-                          onPressed: () =>
-                              deleteAddress(address['id']),
-                          icon: const Icon(Icons.delete,
-                              color: Colors.redAccent, size: 18),
-                          label: Text("Delete",
-                              style: GoogleFonts.ubuntu(
-                                  color: Colors.redAccent,
-                                  fontWeight: FontWeight.w500)),
-                        ),
-                      ],
+                      'address.empty'.tr,
+                      style:
+                          GoogleFonts.ubuntu(color: Colors.grey, fontSize: 16),
                     ),
                   ],
+                )
+              : ListView.builder(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  itemCount: addresses.length,
+                  itemBuilder: (context, index) {
+                    final address = addresses[index];
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12.withOpacity(0.06),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                        border: Border.all(
+                            color: primaryColor.withOpacity(0.15), width: 1),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        leading: CircleAvatar(
+                          backgroundColor: primaryColor.withOpacity(0.15),
+                          radius: 26,
+                          child: Icon(
+                            _getAddressIcon(address['label']),
+                            color: primaryColor,
+                            size: 26,
+                          ),
+                        ),
+                        title: Text(
+                          address['label'] ?? 'No Label',
+                          style: GoogleFonts.ubuntu(
+                              fontSize: 17, fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(address['line1'] ?? '',
+                                style: GoogleFonts.ubuntu(
+                                    color: Colors.grey.shade800, fontSize: 14)),
+                            const SizedBox(height: 2),
+                            Text(
+                                "${address['city'] ?? ''}, ${address['state'] ?? ''}, ${address['country'] ?? ''}",
+                                style: GoogleFonts.ubuntu(
+                                    color: Colors.grey.shade600, fontSize: 13)),
+                            if (address['postcode'] != null)
+                              Text("Postcode: ${address['postcode']}",
+                                  style: GoogleFonts.ubuntu(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 12)),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        primaryColor.withOpacity(0.1),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            EditAddressScreen(address: address),
+                                      ),
+                                    ).then((value) {
+                                      if (value == true) fetchAddresses();
+                                    });
+                                  },
+                                  icon: Icon(Icons.edit,
+                                      color: primaryColor, size: 18),
+                                  label: Text("Edit",
+                                      style: GoogleFonts.ubuntu(
+                                          color: primaryColor,
+                                          fontWeight: FontWeight.w500)),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        Colors.redAccent.withOpacity(0.1),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                  ),
+                                  onPressed: () => deleteAddress(address['id']),
+                                  icon: const Icon(Icons.delete,
+                                      color: Colors.redAccent, size: 18),
+                                  label: Text("Delete",
+                                      style: GoogleFonts.ubuntu(
+                                          color: Colors.redAccent,
+                                          fontWeight: FontWeight.w500)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
-            );
-          },
-        ),
-      ),
     );
   }
 }

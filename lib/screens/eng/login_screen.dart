@@ -76,12 +76,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const EnglishTitle('Login to Your Account'),
+                    EnglishTitle('login.title'.tr),
                     const Spacebar('h', space: 2.25),
 
                     EnglishIconTextField(
                       controller: emailController,
-                      hint: 'Enter Your Email',
+                      hint: 'login.emailHint'.tr,
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
                     ),
@@ -89,12 +89,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     EnglishIconTextField(
                       controller: passwordController,
                       obscureText: true,
-                      hint: 'Enter Your Password',
+                      hint: 'login.passwordHint'.tr,
                       icon: Icons.lock_outline,
                     ),
                     const Spacebar('h', space: 2.5),
 
-                    EnglishButton('Login', ConstantManager.primaryColor, _login),
+                    EnglishButton('login.login'.tr, ConstantManager.primaryColor, _login),
 
                     const Spacebar('h', space: 2.5),
 
@@ -106,18 +106,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Don't have an account? ",
+                            'login.noAccount'.tr,
                             style: ConstantManager.kfont.copyWith(
                               color: Colors.black,
                               fontSize: SizeConfig.blockSizeHorizontal! * 3.5,
                             ),
                           ),
                           Text(
-                            "Sign Up",
+                            'login.signup'.tr,
                             style: TextStyle(
                               color: ConstantManager.primaryColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: SizeConfig.blockSizeHorizontal! * 3.5,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -134,6 +133,4 @@ class _LoginScreenState extends State<LoginScreen> {
       )),
     );
   }
-
-
 }
