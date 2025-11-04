@@ -14,8 +14,14 @@ class AuthController extends GetxController {
   final AuthService _authService = AuthService();
 
   var isLoading = false.obs;
+  RxString userName = ''.obs;
+  RxString userProfilePicture = ''.obs;
 
   var userProfile = {}.obs;
+  @override
+  onReady() async {
+    await getProfile();
+  }
 
   Future<void> register(String name, String email, String phone,
       String password, String gender) async {
@@ -117,6 +123,7 @@ class AuthController extends GetxController {
 
       if (result != null) {
         userProfile.value = result;
+        
         print(userProfile);
       }
     } finally {

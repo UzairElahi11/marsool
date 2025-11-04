@@ -157,18 +157,22 @@ class _AddressListScreenState extends State<AddressListScreen> {
       body: isLoading
           ? Center(child: CircularProgressIndicator(color: primaryColor))
           : addresses.isEmpty
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.map_outlined,
-                        color: primaryColor.withOpacity(0.3), size: 80),
-                    const SizedBox(height: 16),
-                    Text(
-                      'address.empty'.tr,
-                      style:
-                          GoogleFonts.ubuntu(color: Colors.grey, fontSize: 16),
-                    ),
-                  ],
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(Icons.map_outlined,
+                          color: primaryColor.withOpacity(0.3), size: 80),
+                      const SizedBox(height: 16),
+                      Text(
+                        'address.empty'.tr,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.ubuntu(
+                            color: Colors.grey, fontSize: 16),
+                      ),
+                    ],
+                  ),
                 )
               : ListView.builder(
                   padding:

@@ -46,30 +46,47 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
     final token = prefs.getString('token');
     final id = widget.address['id'];
 
+    if (token == null || token.isEmpty) {
+      Get.snackbar("Error", "Missing auth token. Please log in again.",
+          backgroundColor: Colors.redAccent, colorText: Colors.white);
+      setState(() => isLoading = false);
+      return;
+    }
+
     try {
+      final url = Uri.parse("$baseUrl/addresses/$id");
+      // Debug logs
+      debugPrint("PUT: $url");
+      final body = jsonEncode({
+        "label": labelController.text,
+        "line1": addressController.text,
+        "city": cityController.text,
+        "state": stateController.text,
+        "postcode": postcodeController.text,
+        "country": countryController.text,
+        "is_default": isDefault,
+        "lat": "34.0151",
+        "lng": "71.5249",
+      });
+      debugPrint("Body: $body");
+
       final response = await http.put(
-        Uri.parse("$baseUrl/addresses/$id"),
+        url,
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
         },
-        body: jsonEncode({
-          "label": labelController.text,
-          "line1": addressController.text,
-          "city": cityController.text,
-          "state": stateController.text,
-          "postcode": postcodeController.text,
-          "country": countryController.text,
-          "is_default": isDefault,
-          "lat": "34.0151",
-          "lng": "71.5249",
-        }),
+        body: body,
       );
 
-      if (response.statusCode == 200) {
+      debugPrint("Status: ${response.statusCode}");
+      debugPrint("Response: ${response.body}");
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         Get.snackbar("Success", "Address updated successfully",
             backgroundColor: const Color(0xffe7712b), colorText: Colors.white);
-        Get.back(result: true);
+        // Use Navigator to return true to the previous screen (which may be using Navigator.push)
+        Navigator.pop(context, true);
       } else {
         Get.snackbar("Error", "Failed to update address",
             backgroundColor: Colors.redAccent, colorText: Colors.white);
@@ -77,9 +94,9 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
     } catch (e) {
       Get.snackbar("Error", e.toString(),
           backgroundColor: Colors.redAccent, colorText: Colors.white);
+    } finally {
+      setState(() => isLoading = false);
     }
-
-    setState(() => isLoading = false);
   }
 
   @override
@@ -124,36 +141,40 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
                 ),
               ),
               const SizedBox(height: 25),
-              GestureDetector(
-                onTap: isLoading ? null : updateAddress,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xffe7712b), Color(0xffffa65c)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xffe7712b).withOpacity(0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      )
-                    ],
-                  ),
-                  child: Center(
-                    child: isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                      "Update Address",
-                      style: GoogleFonts.ubuntu(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: isLoading ? null : () => updateAddress(),
+                  child: Ink(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xffe7712b), Color(0xffffa65c)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xffe7712b).withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        )
+                      ],
+                    ),
+                    child: Center(
+                      child: isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                              "Update Address",
+                              style: GoogleFonts.ubuntu(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
                 ),

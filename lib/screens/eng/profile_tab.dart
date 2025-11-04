@@ -38,16 +38,31 @@ class _ProfileTabState extends State<ProfileTab> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const CircleAvatar(
-            radius: 40,
-            backgroundImage: NetworkImage(
-                'https://images.unsplash.com/photo-1568605114967-8130f3a36994'),
-          ),
+          Obx(() {
+            final user = authController.userProfile['user'] as Map<String, dynamic>?;
+            final avatarUrl = user?['avatar_url']?.toString();
+            return CircleAvatar(
+              radius: 40,
+              backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
+                  ? NetworkImage(avatarUrl)
+                  : null,
+              child: (avatarUrl == null || avatarUrl.isEmpty)
+                  ? const Icon(Icons.person, size: 40)
+                  : null,
+            );
+          }),
           const Spacebar('h', space: 1.0),
-          Center(
-              child: Text('Ammar',
-                  style: ConstantManager.kfont
-                      .copyWith(fontSize: 20, fontWeight: FontWeight.bold))),
+          Obx(() {
+            final user = authController.userProfile['user'] as Map<String, dynamic>?;
+            final name = user?['name']?.toString() ?? 'Guest';
+            return Center(
+              child: Text(
+                name,
+                style: ConstantManager.kfont
+                    .copyWith(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            );
+          }),
           const Spacebar('h', space: 3.5),
           profileOption(Icons.person, "profile.myProfile".tr, () {
             Get.to(() => const ProfileScreen());
