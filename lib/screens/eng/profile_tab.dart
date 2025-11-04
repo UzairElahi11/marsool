@@ -18,11 +18,16 @@ class ProfileTab extends StatefulWidget {
 
 class _ProfileTabState extends State<ProfileTab> {
   final AuthController authController = Get.put(AuthController());
-  String _selectedLanguage = Get.locale?.languageCode ?? 'en';
+  String _selectedLanguage = 'en';
 
   @override
   void initState() {
     super.initState();
+    TranslationService.getSavedLanguage().then((lang) {
+      setState(() {
+        _selectedLanguage = lang;
+      });
+    });
   }
 
   @override
