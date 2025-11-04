@@ -49,93 +49,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        iconTheme: const IconThemeData(color: Colors.white),
-        centerTitle: true,
-        title: Text(
-          "Update Profile",
-          style: ConstantManager.kfont.copyWith(color: Colors.white),
+    final isRTL = (Get.locale?.languageCode == 'ar');
+
+    return Directionality(
+      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
+        appBar: AppBar(
+          iconTheme: const IconThemeData(color: Colors.white),
+          centerTitle: true,
+          title: Text(
+            'profileEdit.title'.tr,
+            style: ConstantManager.kfont.copyWith(color: Colors.white),
+          ),
+          backgroundColor: ConstantManager.primaryColor,
         ),
-        backgroundColor: ConstantManager.primaryColor,
-      ),
-      body: Obx(() {
-        if (authController.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        body: Obx(() {
+          if (authController.isLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (authController.userProfile.isNotEmpty) {
-          final profile = authController.userProfile;
-          nameController.text = profile['user']['name'] ?? '';
-          emailController.text = profile['user']['email'] ?? '';
-          phoneController.text = profile['user']['phone'] ?? '';
-        }
+          if (authController.userProfile.isNotEmpty) {
+            final profile = authController.userProfile;
+            nameController.text = profile['user']['name'] ?? '';
+            emailController.text = profile['user']['email'] ?? '';
+            phoneController.text = profile['user']['phone'] ?? '';
+          }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildLabel("Name"),
-                const Spacebar('h', space: 1),
-                _buildTextField(
-                  controller: nameController,
-                  hint: "Enter your name",
-                  validator: (v) => v!.isEmpty ? "Name cannot be empty" : null,
-                ),
-                const Spacebar('h', space: 2),
-                _buildLabel("Email"),
-                const Spacebar('h', space: 1),
-                _buildTextField(
-                  controller: emailController,
-                  hint: "Enter your email",
-                  enable: false,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return "Email required";
-                    if (!GetUtils.isEmail(v)) return "Invalid email";
-                    return null;
-                  },
-                ),
-                const Spacebar('h', space: 2),
-                _buildLabel("Phone"),
-                const Spacebar('h', space: 1),
-                _buildTextField(
-                  controller: phoneController,
-                  hint: "Enter your phone",
-                  keyboardType: TextInputType.phone,
-                  validator: (v) => v!.isEmpty ? "Phone required" : null,
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _saveProfile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ConstantManager.primaryColor,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('profileEdit.name'.tr),
+                  const Spacebar('h', space: 1),
+                  _buildTextField(
+                    controller: nameController,
+                    hint: 'profileEdit.hint.name'.tr,
+                    validator: (v) => v!.isEmpty
+                        ? 'profileEdit.validation.nameEmpty'.tr
+                        : null,
+                  ),
+                  const Spacebar('h', space: 2),
+                  _buildLabel('profileEdit.email'.tr),
+                  const Spacebar('h', space: 1),
+                  _buildTextField(
+                    controller: emailController,
+                    hint: 'profileEdit.hint.email'.tr,
+                    enable: false,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.isEmpty)
+                        return 'profileEdit.validation.emailRequired'.tr;
+                      if (!GetUtils.isEmail(v))
+                        return 'profileEdit.validation.emailInvalid'.tr;
+                      return null;
+                    },
+                  ),
+                  const Spacebar('h', space: 2),
+                  _buildLabel('profileEdit.phone'.tr),
+                  const Spacebar('h', space: 1),
+                  _buildTextField(
+                    controller: phoneController,
+                    hint: 'profileEdit.hint.phone'.tr,
+                    keyboardType: TextInputType.phone,
+                    validator: (v) => v!.isEmpty
+                        ? 'profileEdit.validation.phoneRequired'.tr
+                        : null,
+                  ),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _saveProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ConstantManager.primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      "Save Changes",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                      child: Text(
+                        'profileEdit.save'.tr,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 15),
-              ],
+                  const SizedBox(height: 15),
+                ],
+              ),
             ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 

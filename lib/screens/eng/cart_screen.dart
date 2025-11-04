@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -81,8 +82,8 @@ class _CartScreenState extends State<CartScreen> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cart updated successfully!'),
+          SnackBar(
+            content: Text('cart.snackbar.updateSuccess'.tr),
             backgroundColor: Colors.green,
           ),
         );
@@ -112,9 +113,10 @@ class _CartScreenState extends State<CartScreen> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Item deleted successfully!'),
-              backgroundColor: Colors.green),
+          SnackBar(
+            content: Text('cart.snackbar.deleteSuccess'.tr),
+            backgroundColor: Colors.green,
+          ),
         );
         await fetchCart();
       } else {
@@ -132,183 +134,189 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        backgroundColor: primaryColor,
-        title: Text(
-          "My Cart",
-          style: GoogleFonts.ubuntu(
-              color: Colors.white, fontWeight: FontWeight.w600),
-        ),
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : cartItems.isEmpty
-              ? Center(
-                  child: Text(
-                    'Your cart is empty.',
-                    style: GoogleFonts.ubuntu(fontSize: 16, color: Colors.grey),
-                  ),
-                )
-              : Column(
-                  children: [
-                    Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: cartItems.length,
-                        itemBuilder: (context, index) {
-                          final item = cartItems[index];
-                          final product = item['product'] ?? {};
-                          final store = product['store'] ?? {};
+    final isRTL = (Get.locale?.languageCode == 'ar');
 
-                          return Card(
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            margin: const EdgeInsets.symmetric(vertical: 8),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Product info
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          product['title'] ?? '',
-                                          style: GoogleFonts.ubuntu(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: secondaryColor,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          store['name'] ?? '',
-                                          style: GoogleFonts.ubuntu(
-                                            fontSize: 13,
-                                            color: Colors.grey.shade700,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Row(
+    return Directionality(
+        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+        child: Scaffold(
+            backgroundColor: Colors.grey.shade100,
+            appBar: AppBar(
+              backgroundColor: primaryColor,
+              title: Text(
+                'cart.title'.tr,
+                style: GoogleFonts.ubuntu(
+                    color: Colors.white, fontWeight: FontWeight.w600),
+              ),
+            ),
+            body: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : cartItems.isEmpty
+                    ? Center(
+                        child: Text(
+                          'cart.empty'.tr,
+                          style: GoogleFonts.ubuntu(
+                              fontSize: 16, color: Colors.grey),
+                        ),
+                      )
+                    : Column(children: [
+                        Expanded(
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: cartItems.length,
+                            itemBuilder: (context, index) {
+                              final item = cartItems[index];
+                              final product = item['product'] ?? {};
+                              final store = product['store'] ?? {};
+
+                              return Card(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // Product info
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            // Quantity control
-                                            IconButton(
-                                              icon: const Icon(
-                                                  Icons.remove_circle,
-                                                  color: Colors.red),
-                                              onPressed: () {
-                                                int q = item['quantity'];
-                                                if (q > 1)
-                                                  updateCartItem(
-                                                      item['id'], q - 1);
-                                              },
-                                            ),
                                             Text(
-                                              item['quantity'].toString(),
+                                              product['title'] ?? '',
                                               style: GoogleFonts.ubuntu(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w500,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: secondaryColor,
                                               ),
                                             ),
-                                            IconButton(
-                                              icon: const Icon(Icons.add_circle,
-                                                  color: Colors.green),
-                                              onPressed: () {
-                                                int q = item['quantity'];
-                                                updateCartItem(
-                                                    item['id'], q + 1);
-                                              },
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              store['name'] ?? '',
+                                              style: GoogleFonts.ubuntu(
+                                                fontSize: 13,
+                                                color: Colors.grey.shade700,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Row(
+                                              children: [
+                                                // Quantity control
+                                                IconButton(
+                                                  icon: const Icon(
+                                                      Icons.remove_circle,
+                                                      color: Colors.red),
+                                                  onPressed: () {
+                                                    int q = item['quantity'];
+                                                    if (q > 1)
+                                                      updateCartItem(
+                                                          item['id'], q - 1);
+                                                  },
+                                                ),
+                                                Text(
+                                                  item['quantity'].toString(),
+                                                  style: GoogleFonts.ubuntu(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                IconButton(
+                                                  icon: const Icon(
+                                                      Icons.add_circle,
+                                                      color: Colors.green),
+                                                  onPressed: () {
+                                                    int q = item['quantity'];
+                                                    updateCartItem(
+                                                        item['id'], q + 1);
+                                                  },
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  // Price and delete button
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        '${product['price']} ${product['currency'] ?? currency}',
-                                        style: GoogleFonts.ubuntu(
-                                          fontSize: 14,
-                                          color: primaryColor,
-                                          fontWeight: FontWeight.w600,
-                                        ),
                                       ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete,
-                                            color: Colors.grey),
-                                        onPressed: () =>
-                                            deleteCartItem(item['id']),
+                                      // Price and delete button
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            '${product['price']} ${product['currency'] ?? currency}',
+                                            style: GoogleFonts.ubuntu(
+                                              fontSize: 14,
+                                              color: primaryColor,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete,
+                                                color: Colors.grey),
+                                            onPressed: () =>
+                                                deleteCartItem(item['id']),
+                                          ),
+                                        ],
                                       ),
                                     ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-
-                    // Bottom total bar
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.shade300,
-                            blurRadius: 5,
-                            offset: const Offset(0, -2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Total: $totalAmount $currency",
-                            style: GoogleFonts.ubuntu(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: secondaryColor,
-                            ),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => PaymentScreen(
-                                    totalAmount: totalAmount,
-                                    currency: currency,
                                   ),
                                 ),
                               );
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 10),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
-                            ),
-                            child: const Text("Checkout",
-                                style: TextStyle(color: Colors.white)),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-    );
+                        ),
+
+                        // Bottom total bar
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.shade300,
+                                blurRadius: 5,
+                                offset: const Offset(0, -2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${'cart.total'.tr}: $totalAmount $currency',
+                                style: GoogleFonts.ubuntu(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: secondaryColor,
+                                ),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => PaymentScreen(
+                                        totalAmount: totalAmount,
+                                        currency: currency,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryColor,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                ),
+                                child: Text('cart.checkout'.tr,
+                                    style:
+                                        const TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ])));
   }
 }
