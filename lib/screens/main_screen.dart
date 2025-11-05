@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:petshow/screens/eng/cart_screen.dart';
@@ -31,33 +33,149 @@ class _MainPageState extends State<MainPage> {
     const ProfileTab(),
   ];
 
+  // Simple nav item: icon + label, brand color when selected
+  Widget _navItem(IconData icon, String labelKey, int index) {
+    final selected = _currentIndex == index;
+    return InkWell(
+      onTap: () => setState(() => _currentIndex = index),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedScale(
+              scale: selected ? 1.08 : 1.0,
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              child: Icon(
+                icon,
+                size: 26,
+                color:
+                    selected ? const Color(0xffe7712b) : Colors.grey.shade700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                color:
+                    selected ? const Color(0xffe7712b) : Colors.grey.shade700,
+              ),
+              child: Text(labelKey.tr),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Space to reserve so body ends above the floating bar
+  double _reservedBottomSpace(BuildContext context) {
+    final safeBottom = MediaQuery.of(context).padding.bottom;
+    const lift = 10.0;
+    return lift + safeBottom;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isRTL = (Get.locale?.languageCode == 'ar');
 
     return Scaffold(
-      body: _pages[_currentIndex],
-      bottomNavigationBar: Directionality(
-        textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          selectedItemColor: Colors.orange,
-          unselectedItemColor: Colors.grey,
-          onTap: (index) => setState(() => _currentIndex = index),
-          type: BottomNavigationBarType.fixed,
-          items: [
-            BottomNavigationBarItem(
-                icon: const Icon(Icons.storefront), label: 'bottom.store'.tr),
-            BottomNavigationBarItem(
-                icon: const Icon(Icons.shopping_bag_outlined),
-                label: 'bottom.orders'.tr),
-            BottomNavigationBarItem(
-                icon: const Icon(Icons.shopping_cart), label: 'bottom.cart'.tr),
-            BottomNavigationBarItem(
-                icon: const Icon(Icons.person_outline),
-                label: 'bottom.profile'.tr),
-          ],
-        ),
+      backgroundColor: Colors.white,
+      extendBody: true,
+      body: Stack(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(bottom: _reservedBottomSpace(context)),
+            child: _pages[_currentIndex],
+          ),
+
+          // Floating custom bottom bar (unchanged)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: -10,
+            child: SafeArea(
+              minimum: const EdgeInsets.only(bottom: 10),
+              child: Directionality(
+                textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.10),
+                        blurRadius: 24,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                      child: Container(
+                        height: 72,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white.withOpacity(0.92),
+                              Colors.white.withOpacity(0.78),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.8),
+                            width: 0.5,
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Expanded(
+                              child: _navItem(
+                                Icons.storefront_rounded,
+                                'bottom.store',
+                                0,
+                              ),
+                            ),
+                            Expanded(
+                              child: _navItem(
+                                Icons.receipt_long_rounded,
+                                'bottom.orders',
+                                1,
+                              ),
+                            ),
+                            Expanded(
+                              child: _navItem(
+                                Icons.shopping_cart_rounded,
+                                'bottom.cart',
+                                2,
+                              ),
+                            ),
+                            Expanded(
+                              child: _navItem(
+                                Icons.person_rounded,
+                                'bottom.profile',
+                                3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

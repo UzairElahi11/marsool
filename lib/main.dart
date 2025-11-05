@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:petshow/controllers/auth_controller.dart';
-import 'package:petshow/screens/main_screen.dart';
 import 'package:petshow/screens/splash.dart';
 import 'package:petshow/services/translation_service.dart';
 
