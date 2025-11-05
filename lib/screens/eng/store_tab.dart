@@ -17,7 +17,6 @@ class StorePage extends StatefulWidget {
 }
 
 class _StorePageState extends State<StorePage> {
-  // State moved to class scope
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
   String _query = '';
@@ -26,10 +25,48 @@ class _StorePageState extends State<StorePage> {
   List searchResults = [];
   bool isLoading = true;
 
+  // Auto-scrolling banner state
+  late final PageController _bannerController;
+  Timer? _bannerAutoScrollTimer;
+  int _currentBannerIndex = 0;
+  final List<String> _bannerImages = const [
+    'https://static.vecteezy.com/system/resources/previews/006/532/742/large_2x/flash-sale-banner-illustration-template-design-of-special-offer-discount-for-media-promotion-and-social-media-post-free-vector.jpg',
+    'https://static.vecteezy.com/system/resources/previews/006/532/742/large_2x/flash-sale-banner-illustration-template-design-of-special-offer-discount-for-media-promotion-and-social-media-post-free-vector.jpg',
+    'https://static.vecteezy.com/system/resources/previews/006/532/742/large_2x/flash-sale-banner-illustration-template-design-of-special-offer-discount-for-media-promotion-and-social-media-post-free-vector.jpg',
+  ];
+
   @override
   void initState() {
     super.initState();
+    _bannerController = PageController();
     fetchCategoriesWithStores();
+
+    // Ensure controller is attached before starting auto-scroll
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startBannerAutoScroll();
+    });
+  }
+
+  void _startBannerAutoScroll() {
+    _bannerAutoScrollTimer?.cancel();
+    _bannerAutoScrollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_bannerController.hasClients || _bannerImages.isEmpty) return;
+      final next = (_currentBannerIndex + 1) % _bannerImages.length;
+      _bannerController.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 550),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    _bannerAutoScrollTimer?.cancel();
+    _bannerController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchCategoriesWithStores() async {
@@ -84,13 +121,6 @@ class _StorePageState extends State<StorePage> {
         }
       });
     });
-  }
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    _searchController.dispose();
-    super.dispose();
   }
 
   // Helper widgets added to fix "method isn't defined" errors
@@ -314,21 +344,27 @@ class _StorePageState extends State<StorePage> {
                         ],
 
                         // Original UI below
-                        SizedBox(
-                          height: 160,
-                          child: PageView(
-                            children: [
-                              bannerCard(
-                                'https://static.vecteezy.com/system/resources/previews/006/532/742/large_2x/flash-sale-banner-illustration-template-design-of-special-offer-discount-for-media-promotion-and-social-media-post-free-vector.jpg',
+                        // REPLACE the old static PageView(children: [...]) block with this:
+                        Column(
+                          children: [
+                            SizedBox(
+                              height: 160,
+                              child: PageView.builder(
+                                controller: _bannerController,
+                                itemCount: _bannerImages.length,
+                                onPageChanged: (index) {
+                                  setState(() => _currentBannerIndex = index);
+                                },
+                                itemBuilder: (context, index) =>
+                                    bannerCard(_bannerImages[index]),
                               ),
-                              bannerCard(
-                                'https://static.vecteezy.com/system/resources/previews/006/532/742/large_2x/flash-sale-banner-illustration-template-design-of-special-offer-discount-for-media-promotion-and-social-media-post-free-vector.jpg',
-                              ),
-                              bannerCard(
-                                'https://static.vecteezy.com/system/resources/previews/006/532/742/large_2x/flash-sale-banner-illustration-template-design-of-special-offer-discount-for-media-promotion-and-social-media-post-free-vector.jpg',
-                              ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 8),
+                            _BannerIndicator(
+                              length: _bannerImages.length,
+                              activeIndex: _currentBannerIndex,
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 20),
 
@@ -646,4 +682,36 @@ Widget _buildLoadingShimmers() {
       const SizedBox(height: 20),
     ],
   ]);
+}
+
+class _BannerIndicator extends StatelessWidget {
+  final int length;
+  final int activeIndex;
+
+  const _BannerIndicator({
+    super.key,
+    required this.length,
+    required this.activeIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(length, (index) {
+        final isActive = index == activeIndex;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          height: 6,
+          width: isActive ? 14 : 6,
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xffe7712b) : Colors.black12,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        );
+      }),
+    );
+  }
 }
