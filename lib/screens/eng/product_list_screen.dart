@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
@@ -21,14 +22,45 @@ class ProductListScreen extends StatefulWidget {
 class _ProductListScreenState extends State<ProductListScreen> {
   final Color primaryColor = const Color(0xffe7712b);
   final Color secondaryColor = const Color(0xff282f5a);
-
   bool isLoading = true;
   List products = [];
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
+  String _query = '';
+  List filteredProducts = [];
 
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     fetchStoreProducts();
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      final q = _searchController.text.trim().toLowerCase();
+      setState(() {
+        _query = q;
+        if (q.isEmpty) {
+          filteredProducts = List.from(products);
+        } else {
+          filteredProducts = products.where((p) {
+            final title = (p['title'] ?? '').toString().toLowerCase();
+            final desc = (p['description'] ?? '').toString().toLowerCase();
+            return title.contains(q) || desc.contains(q);
+          }).toList();
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchStoreProducts() async {
@@ -48,6 +80,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
         final jsonResponse = json.decode(response.body);
         setState(() {
           products = jsonResponse['data'] ?? [];
+          filteredProducts = List.from(products);
           isLoading = false;
         });
       } else {
@@ -172,6 +205,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final crossAxisCount = width >= 1000
+        ? 4
+        : width >= 700
+            ? 3
+            : 2;
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
@@ -179,42 +219,99 @@ class _ProductListScreenState extends State<ProductListScreen> {
         title: Text(
           widget.storeName,
           style: GoogleFonts.ubuntu(
-              color: Colors.white, fontWeight: FontWeight.w600),
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : products.isEmpty
-              ? Center(
-                  child: Text(
-                    'No products found.',
-                    style: GoogleFonts.ubuntu(fontSize: 16, color: Colors.grey),
+          : Column(
+              children: [
+                // Search bar
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                  child: TextField(
+                    controller: _searchController,
+                    textInputAction: TextInputAction.search,
+                    decoration: InputDecoration(
+                      hintText: 'Search products...',
+                      hintStyle:
+                          GoogleFonts.ubuntu(color: Colors.grey.shade600),
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _query.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _query = '';
+                                  filteredProducts = List.from(products);
+                                });
+                              },
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: primaryColor, width: 1.5),
+                      ),
+                    ),
                   ),
-                )
-              : GridView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: products.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.75,
-                  ),
-                  itemBuilder: (context, index) {
-                    final product = products[index];
-                    final imageUrl = product['images'] != null &&
-                            (product['images'] as List).isNotEmpty
-                        ? 'https://hcodecraft.com/felwa/storage/${product['images'][0]['path']}'
-                        : 'https://via.placeholder.com/150';
-                    return productCard(
-                      id: product['id'],
-                      name: product['title'],
-                      price: product['price'],
-                      currency: product['currency'] ?? 'PKR',
-                      imgUrl: imageUrl,
-                    );
-                  },
                 ),
+                Expanded(
+                  child: filteredProducts.isEmpty
+                      ? Center(
+                          child: Text(
+                            _query.isEmpty
+                                ? 'No products found.'
+                                : 'No matching products.',
+                            style: GoogleFonts.ubuntu(
+                                fontSize: 16, color: Colors.grey),
+                          ),
+                        )
+                      : RefreshIndicator(
+                          color: primaryColor,
+                          onRefresh: fetchStoreProducts,
+                          child: GridView.builder(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                            itemCount: filteredProducts.length,
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 0.75,
+                            ),
+                            itemBuilder: (context, index) {
+                              final product = filteredProducts[index];
+                              final imageUrl = product['images'] != null &&
+                                      (product['images'] as List).isNotEmpty
+                                  ? 'https://hcodecraft.com/felwa/storage/${product['images'][0]['path']}'
+                                  : 'https://via.placeholder.com/150';
+                              return productCard(
+                                id: product['id'],
+                                name: product['title'],
+                                price: product['price'],
+                                currency: product['currency'] ?? 'PKR',
+                                imgUrl: imageUrl,
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -226,92 +323,92 @@ class _ProductListScreenState extends State<ProductListScreen> {
     required String imgUrl,
   }) {
     return GestureDetector(
-      onTap: () => Get.to(() => ProductDetailsScreen(
-            productId: id,
-            storeName: widget.storeName,
-          )),
-      child: Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade300,
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Product image
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Image.network(
-              imgUrl,
-              height: 120,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                height: 120,
-                width: double.infinity,
+        onTap: () => Get.to(() => ProductDetailsScreen(
+              productId: id,
+              storeName: widget.storeName,
+            )),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
                 color: Colors.grey.shade300,
-                alignment: Alignment.center,
-                child: Icon(Icons.storefront, color: Colors.grey.shade700),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
               ),
-            ),
+            ],
           ),
-          // Product name
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.ubuntu(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: secondaryColor,
-              ),
-            ),
-          ),
-          // Price
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              '$price $currency',
-              style: GoogleFonts.ubuntu(
-                color: primaryColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          const Spacer(),
-          // Add to Cart button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: ElevatedButton.icon(
-              onPressed: () => showQuantityDialog(id),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                minimumSize: const Size(double.infinity, 36),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Product image
+              ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
+                child: Image.network(
+                  imgUrl,
+                  height: 120,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 120,
+                    width: double.infinity,
+                    color: Colors.grey.shade300,
+                    alignment: Alignment.center,
+                    child: Icon(Icons.storefront, color: Colors.grey.shade700),
+                  ),
                 ),
               ),
-              icon: const Icon(Icons.shopping_cart,
-                  size: 16, color: Colors.white),
-              label: const Text(
-                'Add to Cart',
-                style: TextStyle(color: Colors.white, fontSize: 13),
+              // Product name
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.ubuntu(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: secondaryColor,
+                  ),
+                ),
               ),
-            ),
+              // Price
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  '$price $currency',
+                  style: GoogleFonts.ubuntu(
+                    color: primaryColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              // Add to Cart button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: ElevatedButton.icon(
+                  onPressed: () => showQuantityDialog(id),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    minimumSize: const Size(double.infinity, 36),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.shopping_cart,
+                      size: 16, color: Colors.white),
+                  label: const Text(
+                    'Add to Cart',
+                    style: TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      )
-    );
+        ));
   }
 }

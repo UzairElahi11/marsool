@@ -83,5 +83,17 @@
   "orders.label.status": "الحالة",
   "orders.status.delivered": "تم التسليم",
   "orders.status.shipped": "تم الشحن",
-  "orders.status.processing": "جارٍ المعالجة"
+  "orders.status.processing": "جارٍ المعالجة",
+  "register.gender.male": "ذكر",
+  "register.gender.female": "أنثى",
+  "register.validation.name": "يرجى إدخال الاسم",
+  "register.validation.emailRequired": "يرجى إدخال البريد الإلكتروني",
+  "register.validation.emailInvalid": "البريد الإلكتروني غير صالح",
+  "register.validation.phoneRequired": "يرجى إدخال رقم الهاتف",
+  "register.validation.phoneInvalid": "رقم هاتف غير صالح",
+  "register.validation.genderRequired": "يرجى اختيار الجنس",
+  "register.validation.passwordRequired": "يرجى إدخال كلمة المرور",
+  "register.validation.passwordMin": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+  "register.validation.confirmRequired": "يرجى تأكيد كلمة المرور",
+  "register.validation.passwordMismatch": "كلمتا المرور غير متطابقتين"
 }

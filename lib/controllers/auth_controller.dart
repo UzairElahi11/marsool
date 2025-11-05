@@ -1,11 +1,11 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:petshow/screens/eng/login_screen.dart';
-import 'package:petshow/screens/main_screen.dart';
 import 'package:petshow/screens/eng/otp.dart';
-import 'package:petshow/utils/constants.dart';
+import 'package:petshow/screens/main_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/auth.dart';
@@ -39,10 +39,12 @@ class AuthController extends GetxController {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         message = 'Success: ${response.body}';
-        Get.snackbar('Success', 'Please login to continue');
+        Get.snackbar('Success', 'Please login to continue',
+            backgroundColor: Colors.green, colorText: Colors.white);
         Get.off(() => const LoginScreen());
       } else {
-        Get.snackbar('Failed', 'Error: ${response.body}');
+        Get.snackbar('Failed', 'Error: ${response.body}',
+            backgroundColor: Colors.red, colorText: Colors.white);
         message = 'Error: ${response.body}';
       }
     } catch (e) {
@@ -65,10 +67,12 @@ class AuthController extends GetxController {
 
       if (response.statusCode == 200) {
         message = 'Success: ${response.body}';
-        Get.snackbar('Success', 'OTP has been sent to your email address');
+        Get.snackbar('Success', 'OTP has been sent to your email address',
+            backgroundColor: Colors.green, colorText: Colors.white);
         Get.off(() => OtpVerificationScreen(email: email));
       } else {
-        Get.snackbar('Failed', 'Invalid credentials');
+        Get.snackbar('Failed', 'Invalid credentials',
+            backgroundColor: Colors.red, colorText: Colors.white);
         message = 'Invalid credentials: ${response.body}';
       }
     } catch (e) {
@@ -105,7 +109,8 @@ class AuthController extends GetxController {
 
         Get.offAll(() => const PetShopApp());
       } else {
-        Get.snackbar('Failed', 'Invalid / Expired OTP');
+        Get.snackbar('Failed', 'Invalid / Expired OTP',
+            backgroundColor: Colors.red, colorText: Colors.white);
         message = 'Invalid OTP: ${response.body}';
       }
     } catch (e) {
@@ -123,7 +128,7 @@ class AuthController extends GetxController {
 
       if (result != null) {
         userProfile.value = result;
-        
+
         print(userProfile);
       }
     } finally {
@@ -149,15 +154,18 @@ class AuthController extends GetxController {
 
         userProfile.value = {'user': data['user']};
 
-        Get.snackbar('Success', 'Profile updated successfully');
+        Get.snackbar('Success', 'Profile updated successfully',
+            backgroundColor: Colors.green, colorText: Colors.white);
         message = 'Profile updated: ${response.body}';
       } else {
-        Get.snackbar('Failed', 'Could not update profile');
+        Get.snackbar('Failed', 'Could not update profile',
+            backgroundColor: Colors.red, colorText: Colors.white);
         message = 'Failed: ${response?.body}';
       }
     } catch (e) {
       message = 'Error: $e';
-      Get.snackbar('Error', 'Something went wrong');
+      Get.snackbar('Error', 'Something went wrong',
+          backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       print(message);
       isLoading.value = false;
@@ -178,14 +186,13 @@ class AuthController extends GetxController {
       // Navigate to login screen
       Get.offAll(() => const LoginScreen());
 
-      Get.snackbar('Success', 'Logged out successfully');
+      Get.snackbar('Success', 'Logged out successfully',
+          backgroundColor: Colors.green);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to logout: $e');
+      Get.snackbar('Error', 'Failed to logout: $e',
+          backgroundColor: Colors.red);
     } finally {
       isLoading.value = false;
     }
   }
-
-
-  
 }

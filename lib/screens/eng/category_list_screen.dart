@@ -1,8 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:petshow/screens/eng/product_list_screen.dart';
+import 'package:petshow/screens/eng/store_list_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
@@ -15,20 +20,30 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   final String apiUrl = "http://hcodecraft.com/felwa/api/categories";
   List categories = [];
   bool isLoading = true;
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
+  String _query = '';
+  List searchResults = [];
 
   @override
   void initState() {
     super.initState();
-    fetchCategories();
+    fetchCategoriesWithStores();
   }
 
-  Future<void> fetchCategories() async {
+  Future<void> fetchCategoriesWithStores() async {
     setState(() => isLoading = true);
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
+      final response = await http.get(
+        Uri.parse('http://hcodecraft.com/felwa/api/categories-with-stores'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
       log("URL::: ${response.request?.url}");
+      log(" CATEGORIES BODY::: ${response.request is http.Request ? (response.request as http.Request).body : 'N/A'}");
       log("RESPONSE CATEGORIES::: ${response.body}");
-      
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
@@ -45,6 +60,55 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       );
     }
     setState(() => isLoading = false);
+  }
+
+  void _onSearchChanged(String value) {
+    _query = value;
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      final q = _query.trim().toLowerCase();
+      setState(() {
+        if (q.isEmpty) {
+          searchResults = [];
+        } else {
+          final List combined = [];
+          for (final c in categories) {
+            final cTitle = (c['title'] ?? '').toString();
+            final cImage = c['image'];
+            final cId = c['id'];
+            if (cTitle.toLowerCase().contains(q)) {
+              combined.add({
+                'type': 'category',
+                'id': cId,
+                'title': cTitle,
+                'image': cImage,
+              });
+            }
+            final stores = (c['stores'] as List?) ?? [];
+            for (final s in stores) {
+              final sName = (s['name'] ?? '').toString();
+              if (sName.toLowerCase().contains(q)) {
+                combined.add({
+                  'type': 'store',
+                  'id': s['id'],
+                  'title': sName,
+                  'image': s['logo_url'],
+                  'categoryId': cId,
+                  'categoryTitle': cTitle,
+                });
+              }
+            }
+          }
+          searchResults = combined;
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -65,26 +129,131 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         iconTheme: const IconThemeData(color: Color(0xffe7712b)),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xffe7712b)))
-          : RefreshIndicator(
-        onRefresh: fetchCategories,
-        color: const Color(0xffe7712b),
-        child: categories.isEmpty
-            ? Center(
-          child: Text(
-            "No categories found",
-            style: GoogleFonts.ubuntu(fontSize: 16, color: Colors.grey),
-          ),
-        )
-            : ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: categories.length,
-          itemBuilder: (context, index) {
-            final category = categories[index];
-            return _buildCategoryCard(category);
-          },
-        ),
-      ),
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xffe7712b)))
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _onSearchChanged,
+                      decoration: InputDecoration(
+                        hintText: 'Search categories and stores',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _query.isEmpty
+                            ? null
+                            : IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _onSearchChanged('');
+                                },
+                              ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
+                      ),
+                      style: GoogleFonts.ubuntu(),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: fetchCategoriesWithStores,
+                    color: const Color(0xffe7712b),
+                    child: _query.trim().isNotEmpty
+                        ? ListView.separated(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            itemCount: searchResults.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final item = searchResults[index];
+                              final isCategory = item['type'] == 'category';
+                              final imgUrl = isCategory
+                                  ? 'https://hcodecraft.com/felwa/storage/${item['image']}'
+                                  : (item['image'] ?? '');
+                              return Card(
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.all(8),
+                                  leading: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      imgUrl,
+                                      width: 48,
+                                      height: 48,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        width: 48,
+                                        height: 48,
+                                        color: Colors.grey.shade300,
+                                        alignment: Alignment.center,
+                                        child: Icon(
+                                          isCategory
+                                              ? Icons.image
+                                              : Icons.store,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    item['title'] ?? '',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.ubuntu(
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                  trailing: const Icon(Icons.chevron_right),
+                                  onTap: () {
+                                    if (isCategory) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => StoreListScreen(
+                                            categoryId: item['id'],
+                                            categoryTitle: item['title'],
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => ProductListScreen(
+                                            storeId: item['id'],
+                                            storeName: item['title'],
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                              );
+                            },
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: categories.length,
+                            itemBuilder: (context, index) {
+                              final category = categories[index];
+                              return _buildCategoryCard(category);
+                            },
+                          ),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -111,7 +280,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   color: const Color(0xffe7712b).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.category, color: Color(0xffe7712b), size: 28),
+                child: const Icon(Icons.category,
+                    color: Color(0xffe7712b), size: 28),
               ),
               const SizedBox(width: 16),
               // Text content

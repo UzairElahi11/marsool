@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -26,11 +27,41 @@ class _StoreListScreenState extends State<StoreListScreen> {
 
   bool isLoading = true;
   List stores = [];
+  List filteredStores = [];
+
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
+  String _query = '';
 
   @override
   void initState() {
     super.initState();
     fetchStoresForCategory();
+  }
+
+  void _onSearchChanged(String value) {
+    _query = value;
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      final q = _query.trim().toLowerCase();
+      setState(() {
+        if (q.isEmpty) {
+          filteredStores = List.from(stores);
+        } else {
+          filteredStores = stores.where((s) {
+            final name = (s['name'] ?? '').toString().toLowerCase();
+            return name.contains(q);
+          }).toList();
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchStoresForCategory() async {
@@ -47,23 +78,33 @@ class _StoreListScreenState extends State<StoreListScreen> {
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
-        final data = jsonResponse['data'] as List;
-        final selectedCategory = data.firstWhere(
+        final List<dynamic> raw = (jsonResponse['data'] as List?) ?? [];
+        final List<Map<String, dynamic>> data =
+            raw.cast<Map<String, dynamic>>();
+
+        final Map<String, dynamic> selectedCategory = data.firstWhere(
           (c) => c['id'] == widget.categoryId,
-          orElse: () => null,
+          orElse: () => <String, dynamic>{},
         );
 
+        final List loaded = (selectedCategory['stores'] as List?) ?? [];
+
         setState(() {
-          stores = selectedCategory?['stores'] ?? [];
+          stores = loaded;
+          filteredStores = List.from(stores);
           isLoading = false;
         });
       } else {
         setState(() => isLoading = false);
-        debugPrint('Failed to fetch stores: ${response.body}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: ${response.statusCode}')),
+        );
       }
     } catch (e) {
       setState(() => isLoading = false);
-      debugPrint('Error fetching stores: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 
@@ -76,89 +117,150 @@ class _StoreListScreenState extends State<StoreListScreen> {
         title: Text(
           widget.categoryTitle,
           style: GoogleFonts.ubuntu(
-              color: Colors.white, fontWeight: FontWeight.w600),
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
         ),
+        elevation: 2,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : stores.isEmpty
-              ? Center(
-                  child: Text(
-                    'No stores found for this category.',
-                    style: GoogleFonts.ubuntu(color: Colors.grey, fontSize: 16),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: stores.length,
-                  itemBuilder: (context, index) {
-                    final store = stores[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProductListScreen(
-                              storeId: store['id'],
-                              storeName: store['name'],
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xffe7712b)))
+          : Column(
+              children: [
+                // Modern search bar
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.search, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: _onSearchChanged,
+                            decoration: InputDecoration(
+                              hintText: 'Search stores',
+                              border: InputBorder.none,
+                              isDense: true,
+                              suffixIcon: _query.isEmpty
+                                  ? null
+                                  : IconButton(
+                                      icon: const Icon(Icons.clear),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        _onSearchChanged('');
+                                      },
+                                    ),
                             ),
+                            style: GoogleFonts.ubuntu(),
                           ),
-                        );
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.shade300,
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
                         ),
-                        child: Row(
-                          children: [
-                            ClipRRect(
-                              borderRadius: const BorderRadius.horizontal(
-                                  left: Radius.circular(16)),
-                              child: Image.network(
-                                store['logo_url'] ??
-                                    'https://via.placeholder.com/100',
-                                height: 90,
-                                width: 90,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                  height: 120,
-                                  width: double.infinity,
-                                  color: Colors.grey.shade300,
-                                  alignment: Alignment.center,
-                                  child: Icon(Icons.storefront,
-                                      color: Colors.grey.shade700),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                store['name'] ?? '',
-                                style: GoogleFonts.ubuntu(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: secondaryColor,
-                                ),
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right, color: Colors.grey),
-                            const SizedBox(width: 8),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                      ],
+                    ),
+                  ),
                 ),
+                Expanded(
+                  child: filteredStores.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No stores found for this category.',
+                            style: GoogleFonts.ubuntu(
+                                color: Colors.grey, fontSize: 16),
+                          ),
+                        )
+                      : RefreshIndicator(
+                          color: primaryColor,
+                          onRefresh: fetchStoresForCategory,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: filteredStores.length,
+                            itemBuilder: (context, index) {
+                              final store = filteredStores[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ProductListScreen(
+                                        storeId: store['id'],
+                                        storeName: store['name'],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Card(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  elevation: 3,
+                                  child: Row(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius:
+                                            const BorderRadius.horizontal(
+                                          left: Radius.circular(16),
+                                        ),
+                                        child: Image.network(
+                                          store['logo_url'] ??
+                                              'https://via.placeholder.com/100',
+                                          height: 90,
+                                          width: 90,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              Container(
+                                            height: 90,
+                                            width: 90,
+                                            color: Colors.grey.shade300,
+                                            alignment: Alignment.center,
+                                            child: Icon(
+                                              Icons.storefront,
+                                              color: Colors.grey.shade700,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          store['name'] ?? '',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.ubuntu(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: secondaryColor,
+                                          ),
+                                        ),
+                                      ),
+                                      const Icon(Icons.chevron_right,
+                                          color: Colors.grey),
+                                      const SizedBox(width: 8),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ],
+            ),
     );
   }
 }

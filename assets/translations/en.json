@@ -83,5 +83,17 @@
   "orders.label.status": "Status",
   "orders.status.delivered": "Delivered",
   "orders.status.shipped": "Shipped",
-  "orders.status.processing": "Processing"
+  "orders.status.processing": "Processing",
+  "register.gender.male": "Male",
+  "register.gender.female": "Female",
+  "register.validation.name": "Please enter your name",
+  "register.validation.emailRequired": "Please enter your email",
+  "register.validation.emailInvalid": "Invalid email address",
+  "register.validation.phoneRequired": "Please enter your phone",
+  "register.validation.phoneInvalid": "Invalid phone number",
+  "register.validation.genderRequired": "Please select gender",
+  "register.validation.passwordRequired": "Please enter a password",
+  "register.validation.passwordMin": "Password must be at least 6 characters",
+  "register.validation.confirmRequired": "Please confirm your password",
+  "register.validation.passwordMismatch": "Passwords do not match"
 }

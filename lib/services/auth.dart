@@ -1,11 +1,42 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final String baseUrl = 'http://hcodecraft.com/felwa/api';
+
+  // Add these imports at the top of the file
+  // import 'package:get/get.dart';
+  // import 'package:flutter/material.dart';
+
+  // Helper: success check
+  bool _ok(int status) => status >= 200 && status < 300;
+
+  // Helper: show a bottom error snackbar
+  void _showApiError(String message) {
+    Get.snackbar(
+      'Error',
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.redAccent,
+      colorText: Colors.white,
+    );
+  }
+
+  // Helper: extract a readable message from the API response JSON
+  String _extractMessage(http.Response response, String fallback) {
+    try {
+      final data = jsonDecode(response.body);
+      if (data is Map && data['message'] is String) {
+        return data['message'];
+      }
+    } catch (_) {}
+    return fallback;
+  }
 
   Future<http.Response> registerUser({
     required String name,
@@ -14,69 +45,101 @@ class AuthService {
     required String phone,
     required String gender,
   }) async {
-    final url = Uri.parse('$baseUrl/register');
+    try {
+      final url = Uri.parse('$baseUrl/register');
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'name': name,
-        'email': email,
-        'password': password,
-        'password_confirmation': password,
-        'role': 'customer',
-        'phone': phone,
-        'gender': gender,
-      }),
-    );
-    //Print URL
-    log("URL::: ${response.request?.url}");
-    //Print Response
-    log("RESPONSE REGISTER::: ${response.body}");
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'password': password,
+          'password_confirmation': password,
+          'role': 'customer',
+          'phone': phone,
+          'gender': gender,
+        }),
+      );
 
-    return response;
+      //Print URL
+      log("URL::: ${response.request?.url}");
+      // Print Body request
+      log("RESPONSE REGISTER BODY::: ${response.request is http.Request ? (response.request as http.Request).body : 'N/A'}");
+      //Print Response
+      log("RESPONSE REGISTER RESPONSE::: ${response.body}");
+
+      if (!_ok(response.statusCode)) {
+        _showApiError(_extractMessage(response, 'Failed to register'));
+      }
+      return response;
+    } catch (e) {
+      _showApiError(e.toString());
+      rethrow;
+    }
   }
 
   Future<http.Response> loginUser({
     required String email,
     required String password,
   }) async {
-    final url = Uri.parse('$baseUrl/login');
+    try {
+      final url = Uri.parse('$baseUrl/login');
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
-    );
-    //Print URL
-    log("URL::: ${response.request?.url}");
-    //Print Response
-    log("RESPONSE LOGIN::: ${response.body}");
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
 
-    return response;
+      //Print URL
+      log("URL::: ${response.request?.url}");
+      // Print Body request
+      log("RESPONSE LOGIN BODY::: ${response.request is http.Request ? (response.request as http.Request).body : 'N/A'}");
+      //Print Response
+      log("RESPONSE LOGIN::: ${response.body}");
+
+      if (!_ok(response.statusCode)) {
+        _showApiError(_extractMessage(response, 'Failed to login'));
+      }
+      return response;
+    } catch (e) {
+      _showApiError(e.toString());
+      rethrow;
+    }
   }
 
   Future<http.Response> verifyOtp({
     required String email,
     required String otp,
   }) async {
-    final url = Uri.parse('$baseUrl/verify-otp');
+    try {
+      final url = Uri.parse('$baseUrl/verify-otp');
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'otp': otp}),
-    );
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'otp': otp}),
+      );
 
-    //Print URL
-    log("URL::: ${response.request?.url}");
-    //Print Response
-    log("RESPONSE VERIFY OTP::: ${response.body}");
+      //Print URL
+      log("URL::: ${response.request?.url}");
+      // Print Body request
+      log("RESPONSE VERIFY OTP BODY::: ${response.request is http.Request ? (response.request as http.Request).body : 'N/A'}");
+      //Print Response
+      log("RESPONSE VERIFY OTP::: ${response.body}");
 
-    return response;
+      if (!_ok(response.statusCode)) {
+        _showApiError(_extractMessage(response, 'Invalid / Expired OTP'));
+      }
+      return response;
+    } catch (e) {
+      _showApiError(e.toString());
+      rethrow;
+    }
   }
 
   Future<dynamic> getProfile() async {
@@ -93,6 +156,8 @@ class AuthService {
       );
       //Print URL
       log("URL::: ${response.request?.url}");
+      // Print Body request
+      log("RESPONSE PROFILE BODY::: ${response.request is http.Request ? (response.request as http.Request).body : 'N/A'}");
       //Print Response
       log("RESPONSE PROFILE::: ${response.body}");
 
@@ -100,10 +165,11 @@ class AuthService {
         final data = jsonDecode(response.body);
         return data;
       } else {
-        print('Error ${response.body}');
+        _showApiError(_extractMessage(response, 'Failed to fetch profile'));
         return null;
       }
     } catch (e) {
+      _showApiError(e.toString());
       return null;
     }
   }
@@ -136,9 +202,12 @@ class AuthService {
         }),
       );
 
+      if (!_ok(response.statusCode)) {
+        _showApiError(_extractMessage(response, 'Failed to update profile'));
+      }
       return response;
     } catch (e) {
-      print('Error in updateProfile: $e');
+      _showApiError('Error in updateProfile: $e');
       return null;
     }
   }
