@@ -46,3 +46,6 @@ windows/flutter/generated_plugin_registrant.*
 
 # Logs
 *.log
+
+# Dart & Flutter DevTools local settings
+devtools_options.yaml
