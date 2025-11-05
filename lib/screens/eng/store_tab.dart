@@ -46,6 +46,8 @@ class _StorePageState extends State<StorePage> {
       log(" CATEGORIES BODY::: ${response.request is http.Request ? (response.request as http.Request).body : 'N/A'}");
       log("RESPONSE CATEGORIES::: ${response.body}");
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
         setState(() {
@@ -54,10 +56,12 @@ class _StorePageState extends State<StorePage> {
           isLoading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() => isLoading = false);
         debugPrint('Failed to fetch categories: ${response.body}');
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => isLoading = false);
       debugPrint('Error fetching categories: $e');
     }
@@ -67,6 +71,7 @@ class _StorePageState extends State<StorePage> {
     _query = value;
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
       final q = _query.trim().toLowerCase();
       setState(() {
         if (q.isEmpty) {
@@ -83,13 +88,9 @@ class _StorePageState extends State<StorePage> {
 
   @override
   void dispose() {
-    // local search moved to CategoriesScreen; no local resources to dispose
+    _debounce?.cancel();
+    _searchController.dispose();
     super.dispose();
-
-
-  _debounce?.cancel();
-  _searchController.dispose();
-  super.dispose();
   }
 
   // Helper widgets added to fix "method isn't defined" errors

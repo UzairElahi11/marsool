@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:petshow/controllers/auth_controller.dart';
 import 'package:petshow/screens/eng/address_list_screen.dart';
-import 'package:petshow/screens/eng/my_profile.dart';
 import 'package:petshow/screens/eng/coupons_screen.dart';
+import 'package:petshow/screens/eng/my_profile.dart';
 import 'package:petshow/screens/eng/payment_methods_screen.dart';
 import 'package:petshow/services/translation_service.dart';
 import 'package:petshow/utils/constants.dart';
 import 'package:petshow/utils/size_config.dart';
 import 'package:petshow/widgets/space_bar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
