@@ -29,11 +29,7 @@ class _StorePageState extends State<StorePage> {
   late final PageController _bannerController;
   Timer? _bannerAutoScrollTimer;
   int _currentBannerIndex = 0;
-  final List<String> _bannerImages = const [
-    'https://static.vecteezy.com/system/resources/previews/006/532/742/large_2x/flash-sale-banner-illustration-template-design-of-special-offer-discount-for-media-promotion-and-social-media-post-free-vector.jpg',
-    'https://static.vecteezy.com/system/resources/previews/006/532/742/large_2x/flash-sale-banner-illustration-template-design-of-special-offer-discount-for-media-promotion-and-social-media-post-free-vector.jpg',
-    'https://static.vecteezy.com/system/resources/previews/006/532/742/large_2x/flash-sale-banner-illustration-template-design-of-special-offer-discount-for-media-promotion-and-social-media-post-free-vector.jpg',
-  ];
+  final List<String> _bannerImages = [];
 
   @override
   void initState() {
@@ -41,7 +37,6 @@ class _StorePageState extends State<StorePage> {
     _bannerController = PageController();
     fetchCategoriesWithStores();
 
-    // Ensure controller is attached before starting auto-scroll
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startBannerAutoScroll();
     });
@@ -50,7 +45,8 @@ class _StorePageState extends State<StorePage> {
   void _startBannerAutoScroll() {
     _bannerAutoScrollTimer?.cancel();
     _bannerAutoScrollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (!mounted || !_bannerController.hasClients || _bannerImages.isEmpty) return;
+      if (!mounted || !_bannerController.hasClients || _bannerImages.isEmpty)
+        return;
       final next = (_currentBannerIndex + 1) % _bannerImages.length;
       _bannerController.animateToPage(
         next,
@@ -87,10 +83,23 @@ class _StorePageState extends State<StorePage> {
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
+
+        final List<dynamic> rawBanners =
+            (jsonResponse['banners'] as List?) ?? [];
+        final List<String> images = rawBanners
+            .map((b) =>
+                (b is Map<String, dynamic>) ? b['image_url'] as String? : null)
+            .whereType<String>()
+            .toList();
+
         setState(() {
           categories = jsonResponse['data'] ?? [];
+          _bannerImages
+            ..clear()
+            ..addAll(images);
           searchResults = [];
           isLoading = false;
+          _currentBannerIndex = 0;
         });
       } else {
         if (!mounted) return;

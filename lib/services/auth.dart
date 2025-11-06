@@ -165,11 +165,11 @@ class AuthService {
         final data = jsonDecode(response.body);
         return data;
       } else {
-        _showApiError(_extractMessage(response, 'Failed to fetch profile'));
+        // _showApiError(_extractMessage(response, 'Failed to fetch profile'));
         return null;
       }
     } catch (e) {
-      _showApiError(e.toString());
+      // _showApiError(e.toString());
       return null;
     }
   }
