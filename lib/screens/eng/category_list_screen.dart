@@ -17,7 +17,7 @@ class CategoriesScreen extends StatefulWidget {
 }
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
-  final String apiUrl = "http://hcodecraft.com/felwa/api/categories";
+  final String apiUrl = "https://hcodecraft.com/felwa/api/categories";
   List categories = [];
   bool isLoading = true;
   final TextEditingController _searchController = TextEditingController();
@@ -37,7 +37,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token') ?? '';
       final response = await http.get(
-        Uri.parse('http://hcodecraft.com/felwa/api/categories-with-stores'),
+        Uri.parse('https://hcodecraft.com/felwa/api/categories-with-stores'),
         headers: {'Authorization': 'Bearer $token'},
       );
       log("URL::: ${response.request?.url}");

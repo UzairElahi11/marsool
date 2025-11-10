@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  final String baseUrl = 'http://hcodecraft.com/felwa/api';
+  final String baseUrl = 'https://hcodecraft.com/felwa/api';
 
   // Add these imports at the top of the file
   // import 'package:get/get.dart';

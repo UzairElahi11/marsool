@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -70,9 +71,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
       final response = await http.get(
         Uri.parse(
-            'http://hcodecraft.com/felwa/api/stores/${widget.storeId}/products'),
+            'https://hcodecraft.com/felwa/api/stores/${widget.storeId}/products'),
         headers: {'Authorization': 'Bearer $token'},
       );
+
+      //print the url
+      log("URL::: ${response.request?.url}");
+
+      log("Token :: $token");
 
       log("RESPONSE STORE PRODUCTS::: ${response.body}");
 
@@ -99,7 +105,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
       final token = prefs.getString('token') ?? '';
 
       final response = await http.post(
-        Uri.parse('http://hcodecraft.com/felwa/api/add-to-cart'),
+        Uri.parse('https://hcodecraft.com/felwa/api/add-to-cart'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/x-www-form-urlencoded',

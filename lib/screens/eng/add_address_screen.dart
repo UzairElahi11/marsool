@@ -26,7 +26,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   final TextEditingController postcodeController = TextEditingController();
   final TextEditingController countryController = TextEditingController();
 
-  final String apiUrl = "http://hcodecraft.com/felwa/api/addresses";
+  final String apiUrl = "https://hcodecraft.com/felwa/api/addresses";
   final Color primaryColor = const Color(0xffe7712b);
 
   Future<String?> getToken() async {

@@ -1,6 +1,11 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PaymentScreen extends StatefulWidget {
   final double totalAmount;
@@ -57,19 +62,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return sum % 10 == 0;
   }
 
-  void _submitPayment() {
-    if (_formKey.currentState?.validate() ?? false) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Processing payment of ${widget.totalAmount} ${widget.currency}...',
-            style: GoogleFonts.ubuntu(),
-          ),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-  }
+  bool _isSubmitting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -315,10 +308,27 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: _submitPayment,
+                          onPressed: _isSubmitting ? null : _submitPayment,
                           icon: const Icon(Icons.lock),
-                          label: Text('Pay Securely',
-                              style: GoogleFonts.ubuntu(color: Colors.white)),
+                          label: _isSubmitting
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text('Processing...',
+                                        style: GoogleFonts.ubuntu(
+                                            color: Colors.white)),
+                                  ],
+                                )
+                              : Text('Pay Securely',
+                                  style:
+                                      GoogleFonts.ubuntu(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryColor,
                             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -363,6 +373,82 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (RegExp(r'^3[47]').hasMatch(n)) return 'amex';
     if (RegExp(r'^6(?:011|5)').hasMatch(n)) return 'discover';
     return '';
+  }
+
+  Future<void> _submitPayment() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isSubmitting = true);
+    try {
+      final cardNumber = _cardNumberController.text.trim();
+      final month = _expiryMonthController.text.padLeft(2, '0');
+      final year = _expiryYearController.text.trim();
+      final expiry = year.length >= 2
+          ? '$month/${year.substring(year.length - 2)}'
+          : '$month/$year';
+
+      final cvv = _cvvController.text.trim();
+      final name = _nameController.text.trim();
+      final isDefault = _saveCard;
+
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final uri = Uri.parse('https://hcodecraft.com/felwa/api/payment-methods');
+      final response = await http
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null && token.isNotEmpty)
+                'Authorization': 'Bearer $token',
+            },
+            body: json.encode({
+              'card_number': cardNumber,
+              'expiry': expiry,
+              'cvv': cvv,
+              'cardholder_name': name,
+              'is_default': isDefault,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      // print the url
+      log("URL::: ${response.request?.url}");
+
+      // print the token
+      log("Token :: $token");
+
+      // print the response body
+      log("RESPONSE SAVE PAYMENT METHOD::: ${response.body}");
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment method saved successfully.',
+                style: GoogleFonts.ubuntu()),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop(true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment failed (${response.statusCode}).'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Network error: ${e.runtimeType}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 }
 

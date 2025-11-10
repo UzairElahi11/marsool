@@ -37,7 +37,7 @@ class _CartScreenState extends State<CartScreen> {
       final token = prefs.getString('token') ?? '';
 
       final response = await http.get(
-        Uri.parse('http://hcodecraft.com/felwa/api/cart'),
+        Uri.parse('https://hcodecraft.com/felwa/api/cart'),
         headers: {'Authorization': 'Bearer $token'},
       );
       //Print URL
@@ -72,7 +72,7 @@ class _CartScreenState extends State<CartScreen> {
       final token = prefs.getString('token') ?? '';
 
       final response = await http.put(
-        Uri.parse('http://hcodecraft.com/felwa/api/update-cart/$cartId'),
+        Uri.parse('https://hcodecraft.com/felwa/api/update-cart/$cartId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -107,7 +107,7 @@ class _CartScreenState extends State<CartScreen> {
       final token = prefs.getString('token') ?? '';
 
       final response = await http.delete(
-        Uri.parse('http://hcodecraft.com/felwa/api/delete-cart/$cartId'),
+        Uri.parse('https://hcodecraft.com/felwa/api/delete-cart/$cartId'),
         headers: {'Authorization': 'Bearer $token'},
       );
 

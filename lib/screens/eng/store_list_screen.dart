@@ -70,7 +70,7 @@ class _StoreListScreenState extends State<StoreListScreen> {
       final token = prefs.getString('token') ?? '';
 
       final response = await http.get(
-        Uri.parse('http://hcodecraft.com/felwa/api/categories-with-stores'),
+        Uri.parse('https://hcodecraft.com/felwa/api/categories-with-stores'),
         headers: {'Authorization': 'Bearer $token'},
       );
       log("URL::: ${response.request?.url}");

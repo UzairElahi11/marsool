@@ -14,7 +14,7 @@ class EditAddressScreen extends StatefulWidget {
 }
 
 class _EditAddressScreenState extends State<EditAddressScreen> {
-  final String baseUrl = "http://hcodecraft.com/felwa/api";
+  final String baseUrl = "https://hcodecraft.com/felwa/api";
 
   final _formKey = GlobalKey<FormState>();
   late TextEditingController labelController;

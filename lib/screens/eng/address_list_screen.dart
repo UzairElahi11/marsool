@@ -18,7 +18,7 @@ class AddressListScreen extends StatefulWidget {
 class _AddressListScreenState extends State<AddressListScreen> {
   List addresses = [];
   bool isLoading = true;
-  final String baseUrl = "http://hcodecraft.com/felwa/api";
+  final String baseUrl = "https://hcodecraft.com/felwa/api";
   final Color primaryColor = const Color(0xffe7712b);
 
   @override

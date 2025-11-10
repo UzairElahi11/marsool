@@ -43,7 +43,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
       final response = await http.get(
         Uri.parse(
-            'http://hcodecraft.com/felwa/api/products/${widget.productId}'),
+            'https://hcodecraft.com/felwa/api/products/${widget.productId}'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -71,7 +71,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       final token = prefs.getString('token') ?? '';
 
       final response = await http.post(
-        Uri.parse('http://hcodecraft.com/felwa/api/add-to-cart'),
+        Uri.parse('https://hcodecraft.com/felwa/api/add-to-cart'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/x-www-form-urlencoded',
