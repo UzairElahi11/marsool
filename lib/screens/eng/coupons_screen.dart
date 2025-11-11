@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:petshow/utils/constants.dart';
+import 'package:petshow/services/coupon_service.dart';
 
 class CouponsScreen extends StatefulWidget {
   const CouponsScreen({super.key});
@@ -10,7 +11,31 @@ class CouponsScreen extends StatefulWidget {
 }
 
 class _CouponsScreenState extends State<CouponsScreen> {
-  final List<String> _coupons = [];
+  final CouponService _couponService = CouponService();
+  List<dynamic> _coupons = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCoupons();
+  }
+
+  Future<void> _loadCoupons() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final data = await _couponService.getCoupons();
+    setState(() {
+      _coupons = data;
+      _loading = false;
+      if (data.isEmpty) {
+        _error = null; // empty state rather than error
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +65,24 @@ class _CouponsScreenState extends State<CouponsScreen> {
           children: [
             _addCouponCard(),
             const SizedBox(height: 24),
-            ..._coupons.map((c) => _couponItem(c)).toList(),
+            if (_loading)
+              const Center(child: CircularProgressIndicator()),
+            if (!_loading && _coupons.isEmpty)
+              Center(
+                child: Text(
+                  'No coupons found',
+                  style: ConstantManager.kfont,
+                ),
+              ),
+            if (_error != null)
+              Center(
+                child: Text(
+                  _error!,
+                  style: ConstantManager.kfont.copyWith(color: Colors.red),
+                ),
+              ),
+            if (!_loading && _coupons.isNotEmpty)
+              ..._coupons.map((c) => _couponItem(c)).toList(),
           ],
         ),
       ),
@@ -87,7 +129,8 @@ class _CouponsScreenState extends State<CouponsScreen> {
     );
   }
 
-  Widget _couponItem(String code) {
+  Widget _couponItem(dynamic coupon) {
+    final String code = _extractCode(coupon);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -123,21 +166,45 @@ class _CouponsScreenState extends State<CouponsScreen> {
     );
   }
 
+  String _extractCode(dynamic coupon) {
+    if (coupon is String) return coupon;
+    if (coupon is Map) {
+      return (coupon['code'] ?? coupon['coupon_code'] ?? '').toString();
+    }
+    return coupon?.toString() ?? '';
+  }
+
   Future<void> _openAddCouponBottomSheet() async {
-    final String? coupon = await _showAddCouponBottomSheet();
-    if (coupon != null && coupon.trim().isNotEmpty) {
-      setState(() {
-        _coupons.add(coupon.trim());
-      });
-      Get.snackbar('Coupon added', coupon.trim(),
-          backgroundColor: Colors.green.shade100,
-          colorText: Colors.black,
-          snackPosition: SnackPosition.BOTTOM);
+    final _ValidateInput? input = await _showAddCouponBottomSheet();
+    if (input == null) return;
+
+    final result = await _couponService.validateCoupon(
+      code: input.code,
+      orderAmount: input.orderAmount,
+      storeId: input.storeId,
+    );
+
+    if (result != null) {
+      final msg = (result['message'] ?? 'Coupon validated').toString();
+      Get.snackbar(
+        'Success',
+        msg,
+        backgroundColor: Colors.green.shade100,
+        colorText: Colors.black,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      // Optionally add to visible list if not already present
+      final code = input.code.trim();
+      if (_coupons.where((c) => _extractCode(c) == code).isEmpty) {
+        setState(() {
+          _coupons.insert(0, {'code': code});
+        });
+      }
     }
   }
 
-  Future<String?> _showAddCouponBottomSheet() {
-    return showModalBottomSheet<String>(
+  Future<_ValidateInput?> _showAddCouponBottomSheet() {
+    return showModalBottomSheet<_ValidateInput?>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
@@ -146,6 +213,8 @@ class _CouponsScreenState extends State<CouponsScreen> {
       ),
       builder: (ctx) {
         final TextEditingController codeController = TextEditingController();
+        final TextEditingController amountController = TextEditingController();
+        final TextEditingController storeController = TextEditingController();
         return Padding(
           padding: EdgeInsets.only(
             left: 16,
@@ -155,7 +224,11 @@ class _CouponsScreenState extends State<CouponsScreen> {
           ),
           child: StatefulBuilder(
             builder: (context, setStateBottom) {
-              final bool valid = codeController.text.trim().isNotEmpty;
+              final bool valid = codeController.text.trim().isNotEmpty &&
+                  double.tryParse(amountController.text.trim().isEmpty
+                          ? '0'
+                          : amountController.text.trim()) !=
+                      null;
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +253,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                   const SizedBox(height: 16),
                   Center(
                     child: Text(
-                      'Enter coupon number',
+                      'Enter coupon code',
                       style: ConstantManager.kfont.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -196,6 +269,46 @@ class _CouponsScreenState extends State<CouponsScreen> {
                         textAlign: TextAlign.center,
                         decoration: InputDecoration(
                           hintText: '',
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onChanged: (_) => setStateBottom(() {}),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: SizedBox(
+                      width: 320,
+                      child: TextField(
+                        controller: amountController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        textAlign: TextAlign.center,
+                        decoration: InputDecoration(
+                          hintText: 'Order amount (e.g., 1000.00)',
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onChanged: (_) => setStateBottom(() {}),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: SizedBox(
+                      width: 320,
+                      child: TextField(
+                        controller: storeController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        decoration: InputDecoration(
+                          hintText: 'Store ID (optional)',
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 14),
                           border: OutlineInputBorder(
@@ -250,8 +363,24 @@ class _CouponsScreenState extends State<CouponsScreen> {
                     height: 48,
                     child: ElevatedButton(
                       onPressed: valid
-                          ? () => Navigator.of(ctx)
-                              .pop(codeController.text.trim())
+                          ? () {
+                              final double amount = double.tryParse(
+                                    amountController.text.trim().isEmpty
+                                        ? '0'
+                                        : amountController.text.trim(),
+                                  ) ??
+                                  0.0;
+                              final int? storeId = storeController.text.trim().isEmpty
+                                  ? null
+                                  : int.tryParse(storeController.text.trim());
+                              Navigator.of(ctx).pop(
+                                _ValidateInput(
+                                  codeController.text.trim(),
+                                  amount,
+                                  storeId,
+                                ),
+                              );
+                            }
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green.shade300,
@@ -261,7 +390,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text('Verify'),
+                      child: const Text('Validate'),
                     ),
                   ),
                 ],
@@ -272,6 +401,13 @@ class _CouponsScreenState extends State<CouponsScreen> {
       },
     );
   }
+}
+
+class _ValidateInput {
+  final String code;
+  final double orderAmount;
+  final int? storeId;
+  _ValidateInput(this.code, this.orderAmount, this.storeId);
 }
 
 class _DashedRectPainter extends CustomPainter {

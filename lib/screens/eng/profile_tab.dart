@@ -6,6 +6,7 @@ import 'package:petshow/screens/eng/coupons_screen.dart';
 import 'package:petshow/screens/eng/my_profile.dart';
 import 'package:petshow/screens/eng/payment_methods_screen.dart';
 import 'package:petshow/services/translation_service.dart';
+import 'package:petshow/services/wallet_service.dart';
 import 'package:petshow/utils/constants.dart';
 import 'package:petshow/utils/size_config.dart';
 import 'package:petshow/widgets/space_bar.dart';
@@ -19,6 +20,7 @@ class ProfileTab extends StatefulWidget {
 
 class _ProfileTabState extends State<ProfileTab> {
   final AuthController authController = Get.put(AuthController());
+  final WalletService _walletService = WalletService();
   String _selectedLanguage = 'en';
 
   @override
@@ -29,6 +31,20 @@ class _ProfileTabState extends State<ProfileTab> {
         _selectedLanguage = lang;
       });
     });
+    _fetchWalletDetails();
+  }
+
+  Future<void> _fetchWalletDetails() async {
+    final wallet = await _walletService.getWalletDetails();
+    if (wallet != null) {
+      final user =
+          (authController.userProfile['user'] as Map<String, dynamic>?) ?? {};
+      // Update balance and currency on the user map to reuse existing UI bindings
+      user['wallet_balance'] = wallet['balance'];
+      user['currency'] = wallet['currency'];
+      authController.userProfile['user'] = user;
+      authController.userProfile.refresh();
+    }
   }
 
   @override
@@ -336,33 +352,34 @@ class _ProfileTabState extends State<ProfileTab> {
                     height: 48,
                     child: ElevatedButton(
                       onPressed: parsedAmount > 5
-                          ? () {
-                              final user = authController.userProfile['user']
-                                  as Map<String, dynamic>?;
-                              double current = 0.0;
-                              if (user != null) {
-                                final currentVal =
-                                    user['wallet_balance'] ?? user['balance'];
-                                if (currentVal is num) {
-                                  current = currentVal.toDouble();
-                                } else if (currentVal != null) {
-                                  current =
-                                      double.tryParse(currentVal.toString()) ??
-                                          0.0;
+                          ? () async {
+                              // Using payment_method_id = 1 by default
+                              final result = await _walletService.topupWallet(
+                                amount: parsedAmount,
+                                paymentMethodId: 1,
+                              );
+                              if (result != null) {
+                                final user = (authController
+                                        .userProfile['user']
+                                    as Map<String, dynamic>?) ??
+                                    {};
+                                if (result['balance'] != null) {
+                                  user['wallet_balance'] = result['balance'];
                                 }
-
-                                final newBalance = current + parsedAmount;
-                                // Prefer wallet_balance if it exists, otherwise use balance
-                                if (user.containsKey('wallet_balance')) {
-                                  user['wallet_balance'] = newBalance;
-                                } else {
-                                  user['balance'] = newBalance;
+                                if (result['currency'] != null) {
+                                  user['currency'] = result['currency'];
                                 }
                                 authController.userProfile['user'] = user;
                                 authController.userProfile.refresh();
-                              }
 
-                              Navigator.of(ctx).pop();
+                                Get.snackbar(
+                                  'Success',
+                                  'Wallet topped up successfully',
+                                  backgroundColor: Colors.green,
+                                  colorText: Colors.white,
+                                );
+                                Navigator.of(ctx).pop();
+                              }
                             }
                           : null,
                       style: ElevatedButton.styleFrom(
@@ -401,13 +418,14 @@ class _ProfileTabState extends State<ProfileTab> {
                 authController.userProfile['user'] as Map<String, dynamic>?;
             final dynamic balanceVal =
                 user?['wallet_balance'] ?? user?['balance'];
+            final String currency = user?['currency']?.toString() ?? 'SAR';
             final String balanceStr = (balanceVal == null)
                 ? '0.0'
                 : (balanceVal is num
                     ? balanceVal.toStringAsFixed(1)
                     : balanceVal.toString());
             return Text(
-              '﷼ $balanceStr',
+              '$currency $balanceStr',
               style: ConstantManager.kfont.copyWith(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
