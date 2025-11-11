@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:developer';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
 import 'package:petshow/controllers/auth_controller.dart';
 import 'package:petshow/screens/eng/address_list_screen.dart';
 import 'package:petshow/screens/eng/coupons_screen.dart';
 import 'package:petshow/screens/eng/my_profile.dart';
-import 'package:petshow/screens/eng/payment_methods_screen.dart';
 import 'package:petshow/screens/eng/order_history_screen.dart';
+import 'package:petshow/screens/eng/payment_methods_screen.dart';
+import 'package:petshow/screens/eng/add_card_screen.dart';
 import 'package:petshow/services/translation_service.dart';
 import 'package:petshow/services/wallet_service.dart';
 import 'package:petshow/utils/constants.dart';
@@ -318,9 +323,9 @@ class _ProfileTabState extends State<ProfileTab> {
                             setStateBottom(() {});
                           }
                         },
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Text('Change'),
                             SizedBox(width: 4),
                             Icon(Icons.chevron_right),
@@ -361,9 +366,8 @@ class _ProfileTabState extends State<ProfileTab> {
                                 paymentMethodId: 1,
                               );
                               if (result != null) {
-                                final user = (authController
-                                        .userProfile['user']
-                                    as Map<String, dynamic>?) ??
+                                final user = (authController.userProfile['user']
+                                        as Map<String, dynamic>?) ??
                                     {};
                                 if (result['balance'] != null) {
                                   user['wallet_balance'] = result['balance'];
@@ -496,13 +500,43 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
+  String _last4(dynamic number) {
+    final s = number?.toString() ?? '';
+    return s.length >= 4 ? s.substring(s.length - 4) : '****';
+  }
+
+  Future<List<dynamic>> _fetchPaymentMethodsForSheet() async {
+    const endpoint = 'http://hcodecraft.com/felwa/api/payment-methods';
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+    final res = await http.get(
+      Uri.parse(endpoint),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+    log('PROFILE SHEET PAYMENT METHODS URL::: ${res.request?.url}');
+    log('PROFILE SHEET PAYMENT METHODS STATUS::: ${res.statusCode}');
+    log('PROFILE SHEET PAYMENT METHODS RESPONSE::: ${res.body}');
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      final decoded = jsonDecode(res.body);
+      if (decoded is List) return decoded;
+      if (decoded is Map) {
+        final data = decoded['data'];
+        if (data is Map && data['items'] is List) {
+          return List<dynamic>.from(data['items']);
+        }
+        if (data is List) return List<dynamic>.from(data);
+      }
+      return [];
+    }
+    // On error, just return empty list; caller will show message
+    return [];
+  }
+
   Future<String?> _showPaymentMethodsSheet(
       BuildContext ctx, String current) async {
-    final methods = <String>[
-      'Add New Card',
-      'Visa •••• 1234',
-      'Mastercard •••• 5678',
-    ];
     return showModalBottomSheet<String>(
       context: ctx,
       backgroundColor: Colors.white,
@@ -510,39 +544,141 @@ class _ProfileTabState extends State<ProfileTab> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Select Payment Method',
-                      style: ConstantManager.kfont.copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Select Payment Method',
+                        style: ConstantManager.kfont.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  )
-                ],
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    )
+                  ],
+                ),
               ),
-            ),
-            ...methods.map((m) => ListTile(
-                  leading: const Icon(Icons.credit_card),
-                  title: Text(m, style: ConstantManager.kfont),
-                  trailing: m == current
-                      ? const Icon(Icons.check, color: Colors.green)
-                      : null,
-                  onTap: () => Navigator.pop(context, m),
-                )),
-            const SizedBox(height: 12),
-          ],
+              FutureBuilder<List<dynamic>>(
+                future: _fetchPaymentMethodsForSheet(),
+                builder: (ctx2, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  final methods = snap.data ?? [];
+                  if (methods.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Text('No saved cards found',
+                              style: ConstantManager.kfont),
+                          const SizedBox(height: 8),
+                          ListTile(
+                            leading: const CircleAvatar(
+                              radius: 12,
+                              backgroundColor: Colors.green,
+                              child: Icon(Icons.add,
+                                  size: 12, color: Colors.white),
+                            ),
+                            title: Text('Add New Card',
+                                style: ConstantManager.kfont.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                )),
+                            onTap: () async {
+                              final result = await Get.to<Map<String, dynamic>>(
+                                () => const AddCardScreen(),
+                              );
+                              if (result != null) {
+                                final brand = result['brand'] ?? 'Card';
+                                final last4 = result['last4'] ?? '****';
+                                Navigator.pop(context, '$brand •••• $last4');
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        leading: const CircleAvatar(
+                          radius: 12,
+                          backgroundColor: Colors.green,
+                          child: Icon(Icons.add, size: 12, color: Colors.white),
+                        ),
+                        title: Text('Add New Card',
+                            style: ConstantManager.kfont.copyWith(
+                              fontWeight: FontWeight.w600,
+                            )),
+                        onTap: () async {
+                          final result = await Get.to<Map<String, dynamic>>(
+                            () => const AddCardScreen(),
+                          );
+                          if (result != null) {
+                            final brand = result['brand'] ?? 'Card';
+                            final last4 = result['last4'] ?? '****';
+                            Navigator.pop(context, '$brand •••• $last4');
+                          }
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ...methods.map((pm) {
+                        final map = pm is Map<String, dynamic>
+                            ? pm
+                            : <String, dynamic>{};
+                        final brand = map['brand'] ?? map['type'] ?? 'Card';
+                        final last4 =
+                            map['last4'] ?? _last4(map['card_number']);
+                        final name =
+                            map['cardholder_name'] ?? map['name'] ?? '';
+                        final isDefault = (map['is_default'] == true) ||
+                            (map['default'] == true);
+                        final label = '$brand •••• $last4';
+                        return Column(
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.credit_card,
+                                  color: Colors.black54, size: 28),
+                              title: Text(
+                                label,
+                                style: ConstantManager.kfont.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: name.isNotEmpty
+                                  ? Text(name, style: ConstantManager.kfont)
+                                  : null,
+                              trailing: (label == current && isDefault)
+                                  ? const Icon(Icons.check, color: Colors.green)
+                                  : null,
+                              onTap: () => Navigator.pop(context, label),
+                            ),
+                            const Divider(height: 1),
+                          ],
+                        );
+                      }),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
         );
       },
     );
