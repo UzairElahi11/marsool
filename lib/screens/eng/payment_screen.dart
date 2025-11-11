@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:petshow/screens/main_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
   final double totalAmount;
@@ -25,44 +25,29 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final Color primaryColor = const Color(0xffe7712b);
   final Color secondaryColor = const Color(0xff282f5a);
 
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _cardNumberController = TextEditingController();
-  final _expiryMonthController = TextEditingController();
-  final _expiryYearController = TextEditingController();
-  final _cvvController = TextEditingController();
+  final TextEditingController _orderNotesController = TextEditingController();
+  final TextEditingController _couponCodeController = TextEditingController();
+
+  List<dynamic> _addresses = [];
+  bool _loadingAddresses = false;
+  String? _addressError;
+  int? _selectedAddressId;
+  bool _placingOrder = false;
+
+  final String _baseUrl = 'https://hcodecraft.com/felwa/api';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAddresses();
+  }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _cardNumberController.dispose();
-    _expiryMonthController.dispose();
-    _expiryYearController.dispose();
-    _cvvController.dispose();
+    _orderNotesController.dispose();
+    _couponCodeController.dispose();
     super.dispose();
   }
-
-  bool _isValidCardNumber(String input) {
-    final sanitized = input.replaceAll(RegExp(r'\s+'), '');
-    if (sanitized.isEmpty || !RegExp(r'^\d+$').hasMatch(sanitized))
-      return false;
-
-    int sum = 0;
-    bool alternate = false;
-
-    for (int i = sanitized.length - 1; i >= 0; i--) {
-      int digit = int.parse(sanitized[i]);
-      if (alternate) {
-        digit *= 2;
-        if (digit > 9) digit -= 9;
-      }
-      sum += digit;
-      alternate = !alternate;
-    }
-    return sum % 10 == 0;
-  }
-
-  bool _isSubmitting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +56,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       appBar: AppBar(
         backgroundColor: primaryColor,
         title: Text(
-          'Payment',
+          'Delivery Details',
           style: GoogleFonts.ubuntu(
               color: Colors.white, fontWeight: FontWeight.w600),
         ),
@@ -122,6 +107,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
             ),
+            // Payment form removed. Only delivery details retained below.
             const SizedBox(height: 16),
             Card(
               shape: RoundedRectangleBorder(
@@ -129,273 +115,249 @@ class _PaymentScreenState extends State<PaymentScreen> {
               elevation: 4,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      // Cardholder name: no leading space, only letters and spaces
-                      TextFormField(
-                        controller: _nameController,
-                        inputFormatters: [
-                          LeadingSpaceTrimmer(),
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'[A-Za-z ]')),
-                        ],
-                        decoration: InputDecoration(
-                          labelText: 'Name on Card',
-                          prefixIcon: const Icon(Icons.person_outline),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        validator: (v) {
-                          final value = v ?? '';
-                          if (value.trim().isEmpty)
-                            return 'Enter cardholder name';
-                          if (value.startsWith(' ')) return 'No leading space';
-                          if (!RegExp(r'^[A-Za-z ]+$').hasMatch(value))
-                            return 'Only alphabets allowed';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Card number: digits only
-                      TextFormField(
-                        controller: _cardNumberController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          LeadingSpaceTrimmer(),
-                          CardNumberInputFormatter(),
-                        ],
-                        maxLength: 19,
-                        decoration: InputDecoration(
-                          labelText: 'Card Number',
-                          hintText: 'Enter digits only',
-                          counterText: '',
-                          prefixIcon: const Icon(Icons.credit_card),
-                          suffixIcon: Icon(_brandIcon(_cardBrand),
-                              color: secondaryColor),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onChanged: (v) =>
-                            setState(() => _cardBrand = _detectCardBrand(v)),
-                        validator: (v) {
-                          final value = (v ?? '').replaceAll(' ', '');
-                          if (value.isEmpty) return 'Enter card number';
-                          if (!RegExp(r'^\d+$').hasMatch(value))
-                            return 'Digits only';
-                          if (value.length < 13 || value.length > 19)
-                            return 'Invalid card length';
-                          if (!_isValidCardNumber(value))
-                            return 'Invalid card number';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Expiry month: allow 2 digits only
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Delivery Details',
+                      style: GoogleFonts.ubuntu(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 12),
+                    if (_loadingAddresses)
+                      const LinearProgressIndicator()
+                    else if (_addressError != null)
                       Row(
                         children: [
                           Expanded(
-                            child: TextFormField(
-                              controller: _expiryMonthController,
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                LeadingSpaceTrimmer(),
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              maxLength: 2,
-                              decoration: InputDecoration(
-                                labelText: 'Expiry Month',
-                                hintText: 'MM',
-                                counterText: '',
-                                prefixIcon:
-                                    const Icon(Icons.calendar_today_outlined),
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                              ),
-                              validator: (v) {
-                                final value = (v ?? '');
-                                if (!RegExp(r'^\d{2}$').hasMatch(value))
-                                  return 'Enter 2 digits (MM)';
-                                final month = int.tryParse(value);
-                                if (month == null || month < 1 || month > 12)
-                                  return 'Invalid month';
-                                return null;
-                              },
+                            child: Text(
+                              _addressError!,
+                              style:
+                                  GoogleFonts.ubuntu(color: Colors.redAccent),
                             ),
                           ),
-                          const SizedBox(width: 12),
-
-                          // Expiry year: max 4 digit numbers
-                          Expanded(
-                            child: TextFormField(
-                              controller: _expiryYearController,
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                LeadingSpaceTrimmer(),
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              maxLength: 4,
-                              decoration: InputDecoration(
-                                labelText: 'Expiry Year',
-                                hintText: 'YYYY',
-                                counterText: '',
-                                prefixIcon: const Icon(Icons.event),
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                              ),
-                              validator: (v) {
-                                final value = (v ?? '');
-                                if (!RegExp(r'^\d{1,4}$').hasMatch(value))
-                                  return 'Up to 4 digits';
-                                if (value.length != 4)
-                                  return 'Enter 4 digits (YYYY)';
-                                return null;
-                              },
+                          TextButton(
+                            onPressed: _fetchAddresses,
+                            child: Text(
+                              'Retry',
+                              style: GoogleFonts.ubuntu(color: primaryColor),
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 12),
+                      )
+                    else
+                      DropdownButtonFormField<int>(
+                        initialValue: _selectedAddressId,
+                        items: _addresses
+                            .map((e) {
+                              final m = e is Map ? e : <String, dynamic>{};
+                              final id = m['id'];
+                              if (id is! int) return null;
 
-                      // CVV: allow 3 max
-                      TextFormField(
-                        controller: _cvvController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          LeadingSpaceTrimmer(),
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        maxLength: 3,
+                              final label =
+                                  m['label'] ?? m['type'] ?? 'Address';
+                              final parts = [m['address'], m['area'], m['city']]
+                                  .where((p) =>
+                                      p != null &&
+                                      p.toString().trim().isNotEmpty)
+                                  .map((p) => p.toString());
+                              final text = parts.isNotEmpty
+                                  ? '$label · ${parts.join(', ')}'
+                                  : '$label';
+
+                              return DropdownMenuItem<int>(
+                                value: id,
+                                child: Text(
+                                  text,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.ubuntu(),
+                                ),
+                              );
+                            })
+                            .whereType<DropdownMenuItem<int>>()
+                            .toList(),
+                        onChanged: (val) =>
+                            setState(() => _selectedAddressId = val),
                         decoration: InputDecoration(
-                          labelText: 'CVV',
-                          hintText: '3 digits',
-                          counterText: '',
-                          prefixIcon: const Icon(Icons.shield_outlined),
+                          labelText: 'Select Address',
+                          prefixIcon: const Icon(Icons.location_on_outlined),
                           filled: true,
                           fillColor: Colors.white,
                           border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        validator: (v) {
-                          final len = (v ?? '').length;
-                          if (len == 0) return 'Enter CVV';
-                          if (len > 3) return 'Max 3 digits';
-                          if (len != 3) return 'Enter 3 digits';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      SwitchListTile(
-                        value: _saveCard,
-                        onChanged: (val) => setState(() => _saveCard = val),
-                        title: Text('Save this card for future payments',
-                            style: GoogleFonts.ubuntu()),
-                        activeThumbColor: primaryColor,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _isSubmitting ? null : _submitPayment,
-                          icon: const Icon(Icons.lock),
-                          label: _isSubmitting
-                              ? Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2, color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text('Processing...',
-                                        style: GoogleFonts.ubuntu(
-                                            color: Colors.white)),
-                                  ],
-                                )
-                              : Text('Pay Securely',
-                                  style:
-                                      GoogleFonts.ubuntu(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            elevation: 2,
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _orderNotesController,
+                      decoration: InputDecoration(
+                        labelText: 'Notes',
+                        hintText: 'Add delivery notes',
+                        prefixIcon: const Icon(Icons.note_outlined),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _couponCodeController,
+                      decoration: InputDecoration(
+                        labelText: 'Coupon Code (optional)',
+                        prefixIcon: const Icon(Icons.local_offer_outlined),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ],
         ),
       ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _placingOrder ? null : _placeOrder,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+              child: _placingOrder
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Placing Order...',
+                          style: GoogleFonts.ubuntu(color: Colors.white),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      'Place Order',
+                      style: GoogleFonts.ubuntu(color: Colors.white),
+                    ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  bool _saveCard = false;
-  String _cardBrand = '';
-  IconData _brandIcon(String brand) {
-    switch (brand) {
-      case 'visa':
-        return Icons.credit_card;
-      case 'mastercard':
-        return Icons.credit_card;
-      case 'amex':
-        return Icons.credit_card;
-      case 'discover':
-        return Icons.credit_card;
-      default:
-        return Icons.payment;
+  Future<void> _fetchAddresses() async {
+    setState(() {
+      _loadingAddresses = true;
+      _addressError = null;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
+
+      final res = await http.get(
+        Uri.parse('$_baseUrl/addresses'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      log('ADDRESSES URL::: ${res.request?.url}');
+      log('ADDRESSES STATUS::: ${res.statusCode}');
+      log('ADDRESSES RESPONSE::: ${res.body}');
+
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        final decoded = jsonDecode(res.body);
+        final data = decoded is Map ? decoded['data'] : null;
+        final items = (data is List)
+            ? List<dynamic>.from(data)
+            : (decoded is List ? decoded : <dynamic>[]);
+
+        int? preselected;
+        for (final e in items) {
+          if (e is Map && e['id'] is int) {
+            preselected = e['id'] as int;
+            break;
+          }
+        }
+
+        setState(() {
+          _addresses = items;
+          _selectedAddressId = preselected;
+          _loadingAddresses = false;
+        });
+      } else {
+        final msg = 'Failed to fetch addresses (${res.statusCode})';
+        setState(() {
+          _addressError = msg;
+          _loadingAddresses = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      final msg = 'Error fetching addresses: $e';
+      setState(() {
+        _addressError = msg;
+        _loadingAddresses = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: Colors.red),
+      );
     }
   }
 
-  String _detectCardBrand(String number) {
-    final n = number.replaceAll(' ', '');
-    if (RegExp(r'^4').hasMatch(n)) return 'visa';
-    if (RegExp(r'^(5[1-5]|2[2-7])').hasMatch(n)) return 'mastercard';
-    if (RegExp(r'^3[47]').hasMatch(n)) return 'amex';
-    if (RegExp(r'^6(?:011|5)').hasMatch(n)) return 'discover';
-    return '';
-  }
+  Future<void> _placeOrder() async {
+    if (_selectedAddressId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select an address'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
 
-  Future<void> _submitPayment() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final notes = _orderNotesController.text.trim();
+    final coupon = _couponCodeController.text.trim();
 
-    setState(() => _isSubmitting = true);
+    setState(() => _placingOrder = true);
     try {
-      final cardNumber = _cardNumberController.text.trim();
-      final month = _expiryMonthController.text.padLeft(2, '0');
-      final year = _expiryYearController.text.trim();
-      final expiry = year.length >= 2
-          ? '$month/${year.substring(year.length - 2)}'
-          : '$month/$year';
-
-      final cvv = _cvvController.text.trim();
-      final name = _nameController.text.trim();
-      final isDefault = _saveCard;
-
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
-      final uri = Uri.parse('https://hcodecraft.com/felwa/api/payment-methods');
-      final response = await http
+      final payload = <String, dynamic>{
+        'address_id': _selectedAddressId,
+        'notes': notes,
+        if (coupon.isNotEmpty) 'coupon_code': coupon,
+      };
+
+      final uri = Uri.parse('$_baseUrl/create-order');
+      final res = await http
           .post(
             uri,
             headers: {
@@ -403,40 +365,38 @@ class _PaymentScreenState extends State<PaymentScreen> {
               if (token != null && token.isNotEmpty)
                 'Authorization': 'Bearer $token',
             },
-            body: json.encode({
-              'card_number': cardNumber,
-              'expiry': expiry,
-              'cvv': cvv,
-              'cardholder_name': name,
-              'is_default': isDefault,
-            }),
+            body: json.encode(payload),
           )
           .timeout(const Duration(seconds: 20));
 
-      // print the url
-      log("URL::: ${response.request?.url}");
+      // log the request details
+      log('CREATE ORDER URL::: ${res.request?.url}');
+      log('TOKEN::: $token');
+      log('CREATE ORDER PAYLOAD::: $payload');
+      log('CREATE ORDER RESPONSE::: ${res.body}');
 
-      // print the token
-      log("Token :: $token");
-
-      // print the response body
-      log("RESPONSE SAVE PAYMENT METHOD::: ${response.body}");
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Payment method saved successfully.',
-                style: GoogleFonts.ubuntu()),
+            content: Text(
+              'Order placed successfully.',
+              style: GoogleFonts.ubuntu(),
+            ),
             backgroundColor: Colors.green,
+            duration: const Duration(milliseconds: 600),
           ),
         );
-        Navigator.of(context).pop(true);
+        // Navigate back to Home (MainPage) after short delay so SnackBar shows
+        await Future.delayed(const Duration(milliseconds: 650));
+        if (!mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainPage()),
+          (route) => false,
+        );
       } else {
+        final msg = 'Order failed (${res.statusCode}).';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Payment failed (${response.statusCode}).'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -447,43 +407,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
       );
     } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+      if (mounted) setState(() => _placingOrder = false);
     }
-  }
-}
-
-class CardNumberInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    final digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-    final groups = <String>[];
-    for (var i = 0; i < digitsOnly.length; i += 4) {
-      groups.add(digitsOnly.substring(
-          i, i + 4 > digitsOnly.length ? digitsOnly.length : i + 4));
-    }
-    final formatted = groups.join(' ');
-    final cursorPosition = formatted.length;
-    return TextEditingValue(
-        text: formatted,
-        selection: TextSelection.collapsed(offset: cursorPosition));
-  }
-}
-
-class LeadingSpaceTrimmer extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    final text = newValue.text;
-    if (text.isEmpty) return newValue;
-    // Remove any leading spaces
-    final trimmed = text.replaceFirst(RegExp(r'^\s+'), '');
-    final diff = text.length - trimmed.length;
-    final newOffset =
-        (newValue.selection.baseOffset - diff).clamp(0, trimmed.length);
-    return TextEditingValue(
-      text: trimmed,
-      selection: TextSelection.collapsed(offset: newOffset),
-    );
   }
 }

@@ -5,6 +5,7 @@ import 'package:petshow/screens/eng/address_list_screen.dart';
 import 'package:petshow/screens/eng/coupons_screen.dart';
 import 'package:petshow/screens/eng/my_profile.dart';
 import 'package:petshow/screens/eng/payment_methods_screen.dart';
+import 'package:petshow/screens/eng/order_history_screen.dart';
 import 'package:petshow/services/translation_service.dart';
 import 'package:petshow/services/wallet_service.dart';
 import 'package:petshow/utils/constants.dart';
@@ -92,7 +93,9 @@ class _ProfileTabState extends State<ProfileTab> {
           }),
           _walletListTile(),
           _couponsListTile(),
-          profileOption(Icons.history, "profile.orderHistory".tr, () {}),
+          profileOption(Icons.history, "profile.orderHistory".tr, () {
+            Get.to(() => const OrderHistoryScreen());
+          }),
           profileOption(Icons.payment, "profile.paymentMethods".tr, () {
             Get.to(() => const PaymentMethodsScreen());
           }),
@@ -353,7 +356,6 @@ class _ProfileTabState extends State<ProfileTab> {
                     child: ElevatedButton(
                       onPressed: parsedAmount > 5
                           ? () async {
-                              // Using payment_method_id = 1 by default
                               final result = await _walletService.topupWallet(
                                 amount: parsedAmount,
                                 paymentMethodId: 1,
