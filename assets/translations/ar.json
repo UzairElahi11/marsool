@@ -96,4 +96,12 @@
   "register.validation.passwordMin": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
   "register.validation.confirmRequired": "يرجى تأكيد كلمة المرور",
   "register.validation.passwordMismatch": "كلمتا المرور غير متطابقتين"
+  ,
+  "settings.title": "الإعدادات",
+  "settings.editProfile": "تعديل الملف الشخصي",
+  "settings.language": "إعدادات اللغة",
+  "settings.terms": "الشروط والأحكام",
+  "settings.privacy": "سياسة الخصوصية",
+  "settings.rateApp": "قيّم هذا التطبيق",
+  "settings.deleteAccount": "حذف حسابي"
 }

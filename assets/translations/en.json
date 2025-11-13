@@ -96,4 +96,12 @@
   "register.validation.passwordMin": "Password must be at least 6 characters",
   "register.validation.confirmRequired": "Please confirm your password",
   "register.validation.passwordMismatch": "Passwords do not match"
+  ,
+  "settings.title": "Settings",
+  "settings.editProfile": "Edit Profile",
+  "settings.language": "Language Settings",
+  "settings.terms": "Terms and Conditions",
+  "settings.privacy": "Privacy Policy",
+  "settings.rateApp": "Rate this App",
+  "settings.deleteAccount": "Delete My Account"
 }
