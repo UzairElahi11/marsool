@@ -1,13 +1,13 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:petshow/screens/eng/cart_screen.dart';
 import 'package:petshow/screens/eng/profile_tab.dart';
 import 'package:petshow/widgets/bottom_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'eng/store_tab.dart';
 
 class PetShopApp extends StatelessWidget {

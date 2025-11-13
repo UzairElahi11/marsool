@@ -109,13 +109,9 @@ class _ProfileTabState extends State<ProfileTab> {
           profileOption(Icons.settings, "settings.title".tr, () {
             Get.to(() => const SettingsScreen());
           }),
-          profileOption(Icons.lock_outline, "profile.changePassword".tr, () {
-            Get.to(() => const ChangePasswordScreen());
-          }),
+          // Removed: Change Password tile
+          // Removed: Language tile
           profileOption(Icons.help_outline, "profile.helpSupport".tr, () {}),
-          profileOption(Icons.language, "profile.language".tr, () {
-            _showLanguageDialog();
-          }),
           profileOption(Icons.logout, "profile.logout".tr, () {
             _showLogoutDialog();
           }),

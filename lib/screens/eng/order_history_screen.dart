@@ -64,8 +64,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           }
         }
 
+        // Only include orders with status 'pending', 'confirmed', or 'shipped'
+        final allowed = {'pending', 'confirmed', 'shipped'};
+        final filtered = items.where((order) {
+          final map =
+              order is Map<String, dynamic> ? order : <String, dynamic>{};
+          final status = (map['status'] ?? map['state'] ?? '')
+              .toString()
+              .toLowerCase()
+              .trim();
+          return allowed.contains(status);
+        }).toList();
+
         setState(() {
-          _orders = items;
+          _orders = filtered;
           _loading = false;
         });
       } else {

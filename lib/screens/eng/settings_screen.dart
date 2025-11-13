@@ -1,8 +1,9 @@
+// Top imports section
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:petshow/screens/eng/my_profile.dart';
-import 'package:petshow/screens/eng/terms_screen.dart';
+import 'package:petshow/screens/eng/change_password_screen.dart';
 import 'package:petshow/screens/eng/privacy_policy_screen.dart';
+import 'package:petshow/screens/eng/terms_screen.dart';
 import 'package:petshow/services/translation_service.dart';
 import 'package:petshow/utils/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -39,8 +40,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: ListView(
         children: [
-          _tile(Icons.person_outline, 'settings.editProfile'.tr, () {
-            Get.to(() => const ProfileScreen());
+          _tile(Icons.lock_outline, 'profile.changePassword'.tr, () {
+            Get.to(() => const ChangePasswordScreen());
           }),
           _tile(Icons.language, 'settings.language'.tr, () {
             _showLanguageDialog();
@@ -55,8 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _rateApp();
           }),
           ListTile(
-            leading:
-                const Icon(Icons.delete_outline, color: Colors.redAccent),
+            leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
             title: Text('settings.deleteAccount'.tr,
                 style: ConstantManager.kfont.copyWith(
                     fontWeight: FontWeight.w600, color: Colors.redAccent)),
@@ -72,8 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListTile(
       leading: Icon(icon, color: ConstantManager.primaryColor),
       title: Text(title,
-          style:
-              ConstantManager.kfont.copyWith(fontWeight: FontWeight.w600)),
+          style: ConstantManager.kfont.copyWith(fontWeight: FontWeight.w600)),
       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
       onTap: onTap,
     );
@@ -135,9 +134,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _rateApp() async {
-    final androidId = 'com.app.petshow';
-    final marketUrl = 'market://details?id=$androidId';
-    final webUrl = 'https://play.google.com/store/apps/details?id=$androidId';
+    const androidId = 'com.app.petshow';
+    const marketUrl = 'market://details?id=$androidId';
+    const webUrl = 'https://play.google.com/store/apps/details?id=$androidId';
     try {
       final uri = Uri.parse(marketUrl);
       if (await canLaunchUrl(uri)) {
