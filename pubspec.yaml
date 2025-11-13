@@ -37,6 +37,7 @@ dependencies:
   loading_overlay:
   shared_preferences:
   url_launcher: ^6.3.0
+  flutter_html: ^3.0.0
 
 
 dev_dependencies:
