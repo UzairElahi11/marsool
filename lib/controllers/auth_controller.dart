@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -192,6 +193,41 @@ class AuthController extends GetxController {
       Get.snackbar('Error', 'Failed to logout: $e',
           backgroundColor: Colors.red);
     } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+    String confirmPassword,
+  ) async {
+    var message = '';
+    try {
+      isLoading.value = true;
+
+      final response = await _authService.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
+      );
+
+      if (response != null &&
+          response.statusCode >= 200 &&
+          response.statusCode < 300) {
+        Get.snackbar('Success', 'Password changed successfully',
+            backgroundColor: Colors.green, colorText: Colors.white);
+        message = 'Password changed: ${response.body}';
+        Get.back();
+      } else {
+        message = 'Failed: ${response?.body}';
+      }
+    } catch (e) {
+      message = 'Error: $e';
+      Get.snackbar('Error', 'Something went wrong',
+          backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      log(message);
       isLoading.value = false;
     }
   }

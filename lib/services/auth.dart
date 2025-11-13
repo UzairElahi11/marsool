@@ -211,4 +211,44 @@ class AuthService {
       return null;
     }
   }
+
+  Future<http.Response?> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final tokenType = prefs.getString('token_type') ?? 'Bearer';
+
+      final url = Uri.parse('$baseUrl/change-password');
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": "$tokenType $token",
+        },
+        body: jsonEncode({
+          "current_password": currentPassword,
+          "new_password": newPassword,
+          "new_password_confirmation": confirmPassword,
+        }),
+      );
+
+      log("URL::: ${response.request?.url}");
+      log("STATUS CHANGE-PASSWORD::: ${response.statusCode}");
+      log("RESPONSE CHANGE-PASSWORD BODY::: ${response.request is http.Request ? (response.request as http.Request).body : 'N/A'}");
+      log("RESPONSE CHANGE-PASSWORD::: ${response.body}");
+
+      if (!_ok(response.statusCode)) {
+        _showApiError(_extractMessage(response, 'Failed to change password'));
+      }
+      return response;
+    } catch (e) {
+      _showApiError('Error in changePassword: $e');
+      return null;
+    }
+  }
 }

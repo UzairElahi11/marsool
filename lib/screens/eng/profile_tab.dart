@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:http/http.dart' as http;
+import 'package:petshow/screens/eng/change_password_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
 import 'package:petshow/controllers/auth_controller.dart';
@@ -107,6 +108,9 @@ class _ProfileTabState extends State<ProfileTab> {
           }),
           profileOption(Icons.settings, "settings.title".tr, () {
             Get.to(() => const SettingsScreen());
+          }),
+          profileOption(Icons.lock_outline, "profile.changePassword".tr, () {
+            Get.to(() => const ChangePasswordScreen());
           }),
           profileOption(Icons.help_outline, "profile.helpSupport".tr, () {}),
           profileOption(Icons.language, "profile.language".tr, () {
