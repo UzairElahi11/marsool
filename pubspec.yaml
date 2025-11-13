@@ -36,6 +36,7 @@ dependencies:
   http:
   loading_overlay:
   shared_preferences:
+  url_launcher: ^6.3.0
 
 
 dev_dependencies:

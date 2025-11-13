@@ -11,6 +11,7 @@ import 'package:petshow/screens/eng/my_profile.dart';
 import 'package:petshow/screens/eng/order_history_screen.dart';
 import 'package:petshow/screens/eng/payment_methods_screen.dart';
 import 'package:petshow/screens/eng/add_card_screen.dart';
+import 'package:petshow/screens/eng/settings_screen.dart';
 import 'package:petshow/services/translation_service.dart';
 import 'package:petshow/services/wallet_service.dart';
 import 'package:petshow/utils/constants.dart';
@@ -103,6 +104,9 @@ class _ProfileTabState extends State<ProfileTab> {
           }),
           profileOption(Icons.payment, "profile.paymentMethods".tr, () {
             Get.to(() => const PaymentMethodsScreen());
+          }),
+          profileOption(Icons.settings, "settings.title".tr, () {
+            Get.to(() => const SettingsScreen());
           }),
           profileOption(Icons.help_outline, "profile.helpSupport".tr, () {}),
           profileOption(Icons.language, "profile.language".tr, () {
