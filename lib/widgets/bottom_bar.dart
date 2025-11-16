@@ -94,13 +94,16 @@ class BottomBar extends StatelessWidget {
                     child: _navItem(Icons.storefront_rounded, 'bottom.store', 0),
                   ),
                   Expanded(
-                    child: _navItem(Icons.receipt_long_rounded, 'bottom.orders', 1),
+                    child: _navItem(Icons.directions_bike, 'bottom.delivery', 1),
                   ),
                   Expanded(
-                    child: _navItem(Icons.shopping_cart_rounded, 'bottom.cart', 2),
+                    child: _navItem(Icons.receipt_long_rounded, 'bottom.orders', 2),
                   ),
                   Expanded(
-                    child: _navItem(Icons.person_rounded, 'bottom.profile', 3),
+                    child: _navItem(Icons.shopping_cart_rounded, 'bottom.cart', 3),
+                  ),
+                  Expanded(
+                    child: _navItem(Icons.person_rounded, 'bottom.profile', 4),
                   ),
                 ],
               ),

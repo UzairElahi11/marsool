@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:petshow/screens/eng/cart_screen.dart';
+import 'package:petshow/screens/eng/delivery_page.dart';
 import 'package:petshow/screens/eng/profile_tab.dart';
 import 'package:petshow/widgets/bottom_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,6 +32,7 @@ class _MainPageState extends State<MainPage> {
 
   final List<Widget> _pages = [
     const StorePage(),
+    const DeliveryPage(),
     const OrdersPage(),
     const CartScreen(),
     const ProfileTab(),
@@ -80,7 +82,6 @@ class _MainPageState extends State<MainPage> {
 // ------------------- STORE PAGE -------------------
 //
 
-//
 // ------------------- ORDERS PAGE -------------------
 //
 class OrdersPage extends StatefulWidget {

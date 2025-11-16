@@ -38,6 +38,9 @@ dependencies:
   shared_preferences:
   url_launcher: ^6.3.0
   flutter_html: ^3.0.0
+  flutter_map: ^7.0.0
+  latlong2: ^0.9.0
+  geolocator: ^10.1.0
 
 
 dev_dependencies:
