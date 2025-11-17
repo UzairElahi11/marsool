@@ -108,5 +108,6 @@
   "settings.terms": "Terms and Conditions",
   "settings.privacy": "Privacy Policy",
   "settings.rateApp": "Rate this App",
-  "settings.deleteAccount": "Delete My Account"
+  "settings.deleteAccount": "Delete My Account",
+  "settings.changePassword": "Change Password"
 }
