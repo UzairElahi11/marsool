@@ -19,6 +19,7 @@ coverage/
 # iOS / macOS
 **/DerivedData/
 **/Pods/
+**/Podfile.lock
 **/.symlinks/
 **/Flutter/Flutter.framework
 **/Flutter/Flutter.podspec
@@ -30,10 +31,12 @@ macos/Flutter/GeneratedPluginRegistrant.swift
 # Linux
 linux/flutter/ephemeral/
 linux/flutter/generated_plugin_registrant.*
+linux/flutter/generated_plugins.cmake
 
 # Windows
 windows/flutter/ephemeral/
 windows/flutter/generated_plugin_registrant.*
+windows/flutter/generated_plugins.cmake
 
 # IDE & Editor
 *.iml
